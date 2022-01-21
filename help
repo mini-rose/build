@@ -31,6 +31,10 @@ flags
     Flags to compile with, note that include directories should be defined
     using `include`, not with `flags`.
 
+vendor
+    Additional source files, which do not replace the default glob for all *.c
+    files.
+
 out
     Output file name. This does not create any directories, so you should
     create the build folder yourself if you want. (default: program)

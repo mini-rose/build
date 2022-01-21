@@ -12,7 +12,7 @@
 #include <ftw.h>
 
 /* Version integer. This is shown when -v is passed. */
-#define BUILD_VERSION   1
+#define BUILD_VERSION   3
 
 /* Name of the buildfile. */
 #define BUILD_FILE      "buildfile"
@@ -35,6 +35,7 @@ struct str_list
 
 struct config
 {
+    int show_cmds;
     struct str_list sources;
     struct str_list include;
     struct str_list flags;
@@ -73,6 +74,9 @@ int main(int argc, char **argv)
             continue;
 
         switch (argv[i][1]) {
+            case 'c':
+                config.show_cmds = 1;
+                break;
             case 'h':
                 usage();
                 break;
@@ -100,8 +104,8 @@ struct config parse_buildfile()
     FILE *buildfile;
     size_t len;
 
-    /* Not yet supported values in the buildfile */
-    config.sources  = find('f', "*.c");
+    /* Todo: support smarter sources */
+    config.sources = find('f', "*.c");
 
     buildfile = fopen(BUILD_FILE, "r");
     if (!buildfile) {
@@ -144,6 +148,8 @@ struct config parse_buildfile()
             free(tmpstr);
         } else if (strcmp(buf, "include") == 0) {
             splitstr(&config.include, buf + len + 1);
+        } else if (strcmp(buf, "vendor") == 0) {
+            splitstr(&config.sources, buf + len + 1);
         }
     }
 
@@ -180,9 +186,9 @@ void compile(struct config *config)
     for (size_t i = 0; i < config->include.size; i++)
         cmdsize += strlen(config->include.strs[i]) + 4;
 
-    /* Add an additional 64 bytes for the file name */
+    /* Add an additional 128 bytes for the file name */
 
-    cmdsize += 64;
+    cmdsize += 128;
 
     /* Create the build directory for the objects */
 
@@ -209,6 +215,8 @@ void compile(struct config *config)
             strcat(cmd, config->include.strs[i]);
         }
 
+        if (config->show_cmds)
+            printf("%s\n", cmd);
         system(cmd);
     }
 
@@ -234,6 +242,8 @@ void compile(struct config *config)
         strcat(cmd, strbuf);
     }
 
+    if (config->show_cmds)
+        printf("%s\n", cmd);
     system(cmd);
 
     removedir(config->builddir);
@@ -297,8 +307,9 @@ void str_list_append(struct str_list *list, char *str)
 void usage()
 {
     printf(
-        "usage: build [-hv]\n"
+        "usage: build [-chv]\n"
         "Build a C project with minimal effort.\n\n"
+        "  -c       output commands to stdout\n"
         "  -h       show this page\n"
         "  -v       show the version number\n"
     );
