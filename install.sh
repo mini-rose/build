@@ -1,25 +1,23 @@
 #!/bin/sh
 
-# Compile the tool
+# Compilator options
 
-CC='clang'
+CC=$(type clang cpp c99 | grep -m 1 -v 'not found' | cut -f 1 -d " ")
 FLAGS='-O0 -fsanitize=address'
 SOURCES='main.c'
+TARGET='build'
 
-[ -z "$(type $CC)" ] && CC='gcc'
-[ -z "$(type $CC)" ] && CC='c99'
+$CC $FLAGS -o $TARGET $SOURCES
 
-$CC $FLAGS -o build $SOURCES
+# Installation
 
-# Install
+[ $(id -u) = 0 ] && DEST="$HOME/.local/bin/$TARGET" || DEST="/usr/bin/$TARGET"
 
-[ "$(id -u)" = "0" ] && DEST='/usr/bin/build' || DEST="$HOME/.local/bin/build"
-
-if [ -f "$DEST" ]; then
-    echo "There is already something at $DEST"
+[ -f $DEST ] && {
+    echo 'There is already something at' $DEST
     echo 'Press return to continue, or Ctrl+C to exit'
     read _
-fi
-
-cp -r ./build $DEST
-echo "Installed to $DEST"
+} || {
+    cp -r ./build $DEST \
+        && echo "Installed to $DEST"
+}
