@@ -1,14 +1,13 @@
 /*
- * Build tool. Check the `help` file for the buildfile specification.
+ * Build tool. Check the manpage for the buildfile spec.
  *
  * Copyright (C) 2022 bellrise
  */
+#define _XOPEN_SOURCE 500
 #include <sys/stat.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-
-#define __USE_XOPEN_EXTENDED
 #include <ftw.h>
 
 /* Version integer. This is shown when -v is passed. */
@@ -44,7 +43,7 @@ struct config
     char *out;
 };
 
-void parse_buildfile(struct config *config);
+int parse_buildfile(struct config *config);
 void config_free(struct config *config);
 void str_list_free(struct str_list *list);
 void str_list_append(struct str_list *list, char *str);
@@ -62,7 +61,7 @@ void removedir(char *path);
 
 int main(int argc, char **argv)
 {
-    struct config config;
+    struct config config = {0};
 
     argc--;
     argv++;
@@ -93,32 +92,28 @@ int main(int argc, char **argv)
         }
     }
 
-    /* Compile */
+    if (parse_buildfile(&config) == 1) {
+        printf("build: buildfile not found\n");
+        return 0;
+    }
 
-    parse_buildfile(&config);
     compile(&config);
 
     config_free(&config);
 }
 
-void parse_buildfile(struct config *config)
+int parse_buildfile(struct config *config)
 {
     char *buf, *tmpstr;
     FILE *buildfile;
     size_t len;
 
-    /* Todo: support smarter sources */
+    /* TODO: support smarter sources */
     config->sources = find('f', "*.c");
 
     buildfile = fopen(BUILD_FILE, "r");
-    if (!buildfile) {
-        /* If we can't find the buildfile, set some default values. */
-        config->include  = find('d', "inc*");
-        config->builddir = strdup(BUILD_DIR);
-        config->out      = strdup(BUILD_OUT);
-        config->cc       = strdup(BUILD_CC);
-        return;
-    }
+    if (!buildfile)
+        return 1;
 
     buf = calloc(BUFSIZ, 1);
 
@@ -170,6 +165,8 @@ void parse_buildfile(struct config *config)
 
     free(buf);
     fclose(buildfile);
+
+    return 0;
 }
 
 void compile(struct config *config)
@@ -309,7 +306,7 @@ void usage()
 {
     printf(
         "usage: build [-chv]\n"
-        "Build a C project with minimal effort.\n\n"
+        "Minimal build system\n\n"
         "  -c       output commands to stdout\n"
         "  -h       show this page\n"
         "  -v       show the version number\n"

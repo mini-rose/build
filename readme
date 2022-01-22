@@ -1,35 +1,10 @@
 build
 =====
 
-Minimal build system designed specifically for C. I was fed up with all these
-verbose & over the top build scripts (and God forbid, CMake!), so I had to
-build my own.
+Minimal build system.
 
-The main goal of this build system is to have a minimal build file. I may not
-enjoy having a build file in my project but I understand it's required to
-atleast define the compiler or include paths.
+Install:
+    $ sudo sh install.sh
 
-
-How to use
-----------
-
-In order to use this tool, just run `build` (if installed) on a C project. It
-will build the project with the default settings, so the first available
-compiler will be used on anything that ends with '.c'. It's that simple.
-
-
-Build & install
----------------
-
-If you want to install it globally, run as root (sudo, doas, ...).
-
-    $ sh ./install.sh
-
-
-
-Other
------
-
-`build -v` will always return an integer which represents the actual version of
-the tool. You may use this to compare against if you're looking for some feature
-that is only available from a perticular version.
+Get help after installtion:
+    $ man 1 build
