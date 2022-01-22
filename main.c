@@ -44,7 +44,7 @@ struct config
     char *out;
 };
 
-struct config parse_buildfile();
+void parse_buildfile(struct config *config);
 void config_free(struct config *config);
 void str_list_free(struct str_list *list);
 void str_list_append(struct str_list *list, char *str);
@@ -73,6 +73,10 @@ int main(int argc, char **argv)
         if (argv[i][0] != '-')
             continue;
 
+        /* Make life easier */
+        if (strcmp(argv[i], "--help") == 0)
+            usage();
+
         switch (argv[i][1]) {
             case 'c':
                 config.show_cmds = 1;
@@ -91,30 +95,29 @@ int main(int argc, char **argv)
 
     /* Compile */
 
-    config = parse_buildfile();
+    parse_buildfile(&config);
     compile(&config);
 
     config_free(&config);
 }
 
-struct config parse_buildfile()
+void parse_buildfile(struct config *config)
 {
-    struct config config = {0};
     char *buf, *tmpstr;
     FILE *buildfile;
     size_t len;
 
     /* Todo: support smarter sources */
-    config.sources = find('f', "*.c");
+    config->sources = find('f', "*.c");
 
     buildfile = fopen(BUILD_FILE, "r");
     if (!buildfile) {
         /* If we can't find the buildfile, set some default values. */
-        config.include  = find('d', "inc*");
-        config.builddir = strdup(BUILD_DIR);
-        config.out      = strdup(BUILD_OUT);
-        config.cc       = strdup(BUILD_CC);
-        return config;
+        config->include  = find('d', "inc*");
+        config->builddir = strdup(BUILD_DIR);
+        config->out      = strdup(BUILD_OUT);
+        config->cc       = strdup(BUILD_CC);
+        return;
     }
 
     buf = calloc(BUFSIZ, 1);
@@ -137,38 +140,36 @@ struct config parse_buildfile()
         buf[len] = 0;
 
         if (strcmp(buf, "cc") == 0) {
-            config.cc = lstrip(buf + len + 1);
+            config->cc = lstrip(buf + len + 1);
         } else if (strcmp(buf, "out") == 0) {
-            config.out = lstrip(buf + len + 1);
+            config->out = lstrip(buf + len + 1);
         } else if (strcmp(buf, "builddir") == 0) {
-            config.builddir = lstrip(buf + len + 1);
+            config->builddir = lstrip(buf + len + 1);
         } else if (strcmp(buf, "flags") == 0) {
             tmpstr = lstrip(buf + len + 1);
-            str_list_append(&config.flags, tmpstr);
+            str_list_append(&config->flags, tmpstr);
             free(tmpstr);
         } else if (strcmp(buf, "include") == 0) {
-            splitstr(&config.include, buf + len + 1);
+            splitstr(&config->include, buf + len + 1);
         } else if (strcmp(buf, "vendor") == 0) {
-            splitstr(&config.sources, buf + len + 1);
+            splitstr(&config->sources, buf + len + 1);
         }
     }
 
     /* Provide default values if missing. */
 
-    if (!config.cc) {
-        config.cc = strdup(BUILD_CC);
-    } if (!config.out) {
-        config.out = strdup(BUILD_OUT);
-    } if (!config.builddir) {
-        config.builddir = strdup(BUILD_DIR);
-    } if (!config.include.size) {
-        config.include = find('d', "inc*");
+    if (!config->cc) {
+        config->cc = strdup(BUILD_CC);
+    } if (!config->out) {
+        config->out = strdup(BUILD_OUT);
+    } if (!config->builddir) {
+        config->builddir = strdup(BUILD_DIR);
+    } if (!config->include.size) {
+        config->include = find('d', "inc*");
     }
 
     free(buf);
     fclose(buildfile);
-
-    return config;
 }
 
 void compile(struct config *config)
