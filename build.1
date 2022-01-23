@@ -61,8 +61,11 @@ a different option. This is the list of possible options a buildfile can have:
 
 \fBsrc\fP
   Source files. Each source file is whitespace seperated. You may also use
-  a wildcard (any string with a *), which uses the `find` tool. Leaving this
-  option empty will stop the compilation process. (default: *.c)
+  a wildcard (any string with a *), which uses the `find` tool. Prefix a file
+  name with "!" to exclude it from the sources list. Leaving this option empty
+  will stop the compilation process. First, the wildcards get expanded and only
+  then the files will be excluded. This means that you can "compile everything
+  apart from test.c" using: `src *.c !test.c`. (default: *.c)
 
 \fBflags\fP
   Flags to pass to the compiler.
