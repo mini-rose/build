@@ -47,7 +47,7 @@ struct config
     bool show_cmds;
     bool show_debug;
     bool only_setup;
-    bool no_sources;
+    bool user_sources;
 };
 
 int parse_buildfile(struct config *config);
@@ -126,7 +126,9 @@ int main(int argc, char **argv)
     if (config.show_debug)
         config_dump(&config);
 
-    if (!config.only_setup && !config.no_sources)
+    /* Only compile when any sources are present and the user did not specify
+       the -s flag. */
+    if (!config.only_setup && config.sources.size)
         compile(&config);
 
     config_free(&config);
@@ -164,9 +166,8 @@ int parse_buildfile(struct config *config)
         if (strcmp(buf, "cc") == 0) {
             config->cc = lstrip(buf + len + 1);
         } else if (strcmp(buf, "src") == 0) {
+            config->user_sources = true;
             tmpstr = lstrip(buf + len + 1);
-            if (!strlen(tmpstr) && !config->no_sources)
-                config->no_sources = true;
             parse_sources(&config->sources, tmpstr);
             free(tmpstr);
         } else if (strcmp(buf, "out") == 0) {
@@ -186,7 +187,7 @@ int parse_buildfile(struct config *config)
 
     if (!config->cc) {
         config->cc = strdup(BUILD_CC);
-    } if (!config->sources.size) {
+    } if (!config->user_sources) {
         config->sources = find('f', "*.c");
     } if (!config->out) {
         config->out = strdup(BUILD_OUT);
