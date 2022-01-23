@@ -5,13 +5,16 @@
  */
 #define _XOPEN_SOURCE 500
 #include <sys/stat.h>
+#include <stdbool.h>
+#include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <libgen.h>
 #include <stdio.h>
 #include <ftw.h>
 
 /* Version integer. This is shown when -v is passed. */
-#define BUILD_VERSION   3
+#define BUILD_VERSION   4
 
 /* Name of the buildfile. */
 #define BUILD_FILE      "buildfile"
@@ -34,17 +37,24 @@ struct str_list
 
 struct config
 {
-    int show_cmds;
     struct str_list sources;
     struct str_list include;
     struct str_list flags;
+    char *buildfile;
     char *builddir;
     char *cc;
     char *out;
+    bool show_cmds;
+    bool show_debug;
+    bool only_setup;
+    bool no_sources;
 };
 
 int parse_buildfile(struct config *config);
+void parse_sources(struct str_list *sources, char *str);
+void resolve_paths(struct config *config);
 void config_free(struct config *config);
+void config_dump(struct config *config);
 void str_list_free(struct str_list *list);
 void str_list_append(struct str_list *list, char *str);
 struct str_list find(char type, char *name);
@@ -54,6 +64,7 @@ char *lstrip(char *str);
 int iswhitespace(char c);
 size_t wordlen(char *word);
 void splitstr(struct str_list *list, char *str);
+void strreplace(char *str, char from, char to);
 void removedir(char *path);
 
 
@@ -78,10 +89,23 @@ int main(int argc, char **argv)
 
         switch (argv[i][1]) {
             case 'c':
-                config.show_cmds = 1;
+                config.show_cmds = true;
+                break;
+            case 'd':
+                config.show_debug = true;
+                break;
+            case 'f':
+                if (i + 1 >= argc) {
+                    printf("build: missing argument for -f [file]\n");
+                    return 1;
+                }
+                config.buildfile = strdup(argv[++i]);
                 break;
             case 'h':
                 usage();
+                break;
+            case 's':
+                config.only_setup = true;
                 break;
             case 'v':
                 printf("%d\n", BUILD_VERSION);
@@ -92,12 +116,18 @@ int main(int argc, char **argv)
         }
     }
 
+    resolve_paths(&config);
+
     if (parse_buildfile(&config) == 1) {
-        printf("build: buildfile not found\n");
-        return 0;
+        printf("build: %s not found\n", config.buildfile);
+        return 1;
     }
 
-    compile(&config);
+    if (config.show_debug)
+        config_dump(&config);
+
+    if (!config.only_setup && !config.no_sources)
+        compile(&config);
 
     config_free(&config);
 }
@@ -108,10 +138,7 @@ int parse_buildfile(struct config *config)
     FILE *buildfile;
     size_t len;
 
-    /* TODO: support smarter sources */
-    config->sources = find('f', "*.c");
-
-    buildfile = fopen(BUILD_FILE, "r");
+    buildfile = fopen(config->buildfile, "r");
     if (!buildfile)
         return 1;
 
@@ -136,6 +163,12 @@ int parse_buildfile(struct config *config)
 
         if (strcmp(buf, "cc") == 0) {
             config->cc = lstrip(buf + len + 1);
+        } else if (strcmp(buf, "src") == 0) {
+            tmpstr = lstrip(buf + len + 1);
+            if (!strlen(tmpstr) && !config->no_sources)
+                config->no_sources = true;
+            parse_sources(&config->sources, tmpstr);
+            free(tmpstr);
         } else if (strcmp(buf, "out") == 0) {
             config->out = lstrip(buf + len + 1);
         } else if (strcmp(buf, "builddir") == 0) {
@@ -146,8 +179,6 @@ int parse_buildfile(struct config *config)
             free(tmpstr);
         } else if (strcmp(buf, "include") == 0) {
             splitstr(&config->include, buf + len + 1);
-        } else if (strcmp(buf, "vendor") == 0) {
-            splitstr(&config->sources, buf + len + 1);
         }
     }
 
@@ -155,6 +186,8 @@ int parse_buildfile(struct config *config)
 
     if (!config->cc) {
         config->cc = strdup(BUILD_CC);
+    } if (!config->sources.size) {
+        config->sources = find('f', "*.c");
     } if (!config->out) {
         config->out = strdup(BUILD_OUT);
     } if (!config->builddir) {
@@ -171,8 +204,9 @@ int parse_buildfile(struct config *config)
 
 void compile(struct config *config)
 {
-    struct stat st = {0};
+    struct str_list original_paths = {0};
     size_t cmdsize = 0, srcsize = 0;
+    struct stat st = {0};
     char strbuf[STRSIZE];
     char *cmd;
 
@@ -199,9 +233,16 @@ void compile(struct config *config)
     for (size_t i = 0; i < config->sources.size; i++) {
         srcsize += strlen(config->sources.strs[i]) + 4;
 
+        /* Preserve the original file name, because we want to replace the
+           slashes in the filenames with dollar signs so we can just dump
+           them into the builddir. */
+        str_list_append(&original_paths, config->sources.strs[i]);
+
+        strreplace(config->sources.strs[i], '/', '-');
+
         snprintf(cmd, cmdsize, "%s -c -o %s/%s.o %s", config->cc,
                 config->builddir, config->sources.strs[i],
-                config->sources.strs[i]);
+                original_paths.strs[i]);
 
         for (size_t i = 0; i < config->flags.size; i++) {
             strcat(cmd, " ");
@@ -245,7 +286,32 @@ void compile(struct config *config)
     system(cmd);
 
     removedir(config->builddir);
+    str_list_free(&original_paths);
     free(cmd);
+}
+
+void resolve_paths(struct config *config)
+{
+    /* If the user had not defined a buildfile path, we choose the default. */
+    if (!config->buildfile) {
+        config->buildfile = strdup(BUILD_FILE);
+        return;
+    }
+
+    /* Check if the user specified a different buildfile location. If that is
+       the case, we chdir() to that location in order to work with scripts.
+       If we changed our directory, our buildfile also changes. */
+    char *path = strdup(config->buildfile);
+    char *basepath = strdup(config->buildfile);
+    char *dirpath = dirname(path);
+    if (strcmp(dirpath, ".") != 0) {
+        chdir(dirpath);
+        free(config->buildfile);
+        config->buildfile = strdup(basename(basepath));
+    }
+
+    free(basepath);
+    free(path);
 }
 
 struct str_list find(char type, char *name)
@@ -284,9 +350,28 @@ void config_free(struct config *config)
     str_list_free(&config->sources);
     str_list_free(&config->include);
     str_list_free(&config->flags);
+    free(config->buildfile);
     free(config->builddir);
     free(config->out);
     free(config->cc);
+}
+
+void config_dump(struct config *config)
+{
+    printf("cc:        %s\nbuildfile: %s\nbuilddir:  %s\nout:       %s\n",
+        config->cc, config->buildfile, config->builddir, config->out);
+
+    printf("sources:\n");
+    for (size_t i = 0; i < config->sources.size; i++)
+        printf("  %s\n", config->sources.strs[i]);
+
+    printf("flags:\n");
+    for (size_t i = 0; i < config->flags.size; i++)
+        printf("  %s\n", config->flags.strs[i]);
+
+    printf("include:\n");
+    for (size_t i = 0; i < config->include.size; i++)
+        printf("  %s\n", config->include.strs[i]);
 }
 
 void str_list_free(struct str_list *list)
@@ -305,13 +390,39 @@ void str_list_append(struct str_list *list, char *str)
 void usage()
 {
     printf(
-        "usage: build [-chv]\n"
+        "usage: build [-cdfhsv] [target]\n"
         "Minimal build system\n\n"
-        "  -c       output commands to stdout\n"
-        "  -h       show this page\n"
-        "  -v       show the version number\n"
+        "  -c           output commands to stdout\n"
+        "  -d           display debug information\n"
+        "  -f <file>    path to a different buildfile\n"
+        "  -h           show this page\n"
+        "  -s           only setup, do not start compiling\n"
+        "  -v           show the version number\n"
     );
     exit(0);
+}
+
+void parse_sources(struct str_list *sources, char *str)
+{
+    struct str_list tmp_list = {0};
+    struct str_list found_sources;
+
+    /* Split the string and then read each file. */
+    splitstr(&tmp_list, str);
+    for (size_t i = 0; i < tmp_list.size; i++) {
+        if (tmp_list.strs[i][0] != '*') {
+            str_list_append(sources, tmp_list.strs[i]);
+            continue;
+        }
+
+        /* Use find() for the wildcards. */
+        found_sources = find('f', tmp_list.strs[i]);
+        for (size_t j = 0; j < found_sources.size; j++)
+            str_list_append(sources, found_sources.strs[j]);
+        str_list_free(&found_sources);
+    }
+
+    str_list_free(&tmp_list);
 }
 
 char *lstrip(char *str)
@@ -386,6 +497,15 @@ void splitstr(struct str_list *list, char *str)
         str_list_append(list, tmpstr);
 
         i += wlen - 1;
+    }
+}
+
+void strreplace(char *str, char from, char to)
+{
+    size_t len = strlen(str);
+    for (size_t i = 0; i < len; i++) {
+        if (str[i] == from)
+            str[i] = to;
     }
 }
 

@@ -4,7 +4,7 @@ build
 Minimal build system.
 
 Install:
-    $ sudo sh install.sh
+    $ su -c "sh install.sh"
 
 Get help after installtion:
     $ man 1 build

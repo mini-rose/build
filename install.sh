@@ -3,7 +3,7 @@
 # Compiler options
 
 CC=$(type clang gcc c99 | grep -v 'not found' | head -n 1 | cut -f 1 -d " ")
-FLAGS='-O2'
+FLAGS='-O0 -fsanitize=address'
 SOURCES='main.c'
 TARGET='build'
 MANPAGE='build.1'

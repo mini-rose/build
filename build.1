@@ -13,7 +13,7 @@ build \- Minimal build system
 
 .SH SYNOPSIS
 .PP
-\fBbuild\fP [-chv] [target]
+\fBbuild\fP [-cdfhsv] [target]
 
 
 .SH DESCRIPTION
@@ -24,7 +24,7 @@ as possible, while still being familiar to already existing build systems
 like GNU make. It's designed to easily integrate with a shell script, which
 will execute at certain times, like @after or @before the build tool runs.
 
-This manpage is for \fBbuild\fP version 3.
+This manpage is for \fBbuild\fP version 4.
 
 
 .SH OPTIONS
@@ -32,8 +32,20 @@ This manpage is for \fBbuild\fP version 3.
 \fB\-c\fP
   Output commands to stdout while executing them.
 
+\fB\-d\fP
+  Display debug information about the compilation configuration.
+
+\fB\-f <file>\fP
+  Path to a different buildfile. Note that this also changes the working
+  directory of the build tool. For example, if you run "build -f project/buildfile"
+  it will first change the working directory to "./project", and then run
+  the buildfile from there.
+
 \fB\-h\fP
   Show the help page.
+
+\fB\-s\fP
+  Do not compile, end after setup and buildfile parsing.
 
 \fB\-v\fP
   Show the version number. This is always a single integer number so you may
@@ -62,7 +74,8 @@ This is the list of possible options a \fBbuildfile\fP can have:
 \fBsrc\fP
   List of sources. Apart from regular filenames, you may use a wildcard which
   compares anything with the same file extension. For example, if you want all
-  C files you can use "*.c". All filenames are space-seperated.
+  C files you can use "*.c". All filenames are space-seperated. Leaving this
+  option empty will not compile anything, creating a "target-only" buildfile.
 
 \fBflags\fP
   Flags to pass to the compiler. Note that include directories should be added
