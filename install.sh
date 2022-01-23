@@ -10,7 +10,6 @@ FLAGS='-Wall -Wextra'
     && FLAGS="$FLAGS -O0 -fsanitize=address" \
     || FLAGS="$FLAGS -O2"
 
-echo $FLAGS
 TARGET='build'
 MANPAGE='build.1'
 

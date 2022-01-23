@@ -70,6 +70,7 @@ int parse_buildfile(struct config *config)
     }
 
     expand_wildcards(&config->sources);
+    remove_excluded(&config->sources);
 
     /* Set defualt strings if missing */
 

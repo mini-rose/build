@@ -13,7 +13,7 @@
 #include <ftw.h>
 
 /* Version integer. This is shown when -v is passed. */
-#define BUILD_VERSION   4
+#define BUILD_VERSION   5
 
 /* Name of the buildfile. */
 #define BUILD_FILE      "buildfile"
@@ -79,6 +79,10 @@ void expand_wildcards(struct strlist *filenames);
    some other directory, we first need to chdir() there. */
 void resolve_buildpath(struct config *config);
 
+/* If a filename begins with an "!", it and any matching filenames will be
+   removed from the filename list. */
+void remove_excluded(struct strlist *filenames);
+
 /* Put the filenames into `output` from "find . -type `type` -name `name`."
    Returns the amount of files found. */
 int find(struct strlist *output, char type, char *name);
@@ -103,6 +107,9 @@ void config_dump(struct config *config);
 
 void strlist_free(struct strlist *list);
 void strlist_append(struct strlist *list, char *str);
+
+/* Returns true if `str` can be found in the string list. */
+bool strlist_contains(struct strlist *list, char *str);
 
 /* Replaces the string at the given index with another string. The previous
    string is free'd, and the new one is copied. Returns 1 if index is out of

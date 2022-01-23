@@ -5,7 +5,7 @@
 
 void expand_wildcards(struct strlist *filenames)
 {
-    struct strlist expanded_filenames;
+    struct strlist expanded_filenames = {0};
     size_t nfilenames;
 
     nfilenames = filenames->size;
@@ -41,6 +41,49 @@ void resolve_buildpath(struct config *config)
 
     free(basepath);
     free(path);
+}
+
+void remove_excluded(struct strlist *filenames)
+{
+    /* Because we will be doing a lot of operations on the filenames list,
+       its easier if we just make a new one and push good file paths onto
+       it, instead of iterating over the orignal one n^2 times. */
+    struct strlist new_list = {0};
+    struct strlist exclude_list = {0};
+
+    /* Collect the excluded filenames. */
+
+    for (size_t i = 0; i < filenames->size; i++) {
+        if (filenames->strs[i][0] == '!') {
+            if (filenames->strs[i][1] == 0)
+                continue;
+            strlist_append(&exclude_list, filenames->strs[i] + 1);
+
+            /* We can now carefully remove the string from the list. */
+            free(filenames->strs[i]);
+            filenames->strs[i] = NULL;
+        }
+    }
+
+    /* Iterate over the filenames, and add only if they do not match anything
+       in the excluded list. */
+
+    for (size_t i = 0; i < filenames->size; i++) {
+        if (!filenames->strs[i])
+            continue;
+
+        if (strlist_contains(&exclude_list, filenames->strs[i]))
+            continue;
+
+        strlist_append(&new_list, filenames->strs[i]);
+    }
+
+    /* Move the new_list into the filenames list. */
+
+    strlist_free(&exclude_list);
+    strlist_free(filenames);
+    filenames->size = new_list.size;
+    filenames->strs = new_list.strs;
 }
 
 int find(struct strlist *output, char type, char *name)
