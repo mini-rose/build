@@ -96,3 +96,12 @@ target which calls a certain install.sh you may add this line to your buildfile:
     @install install.sh
 
 Then call the target with "build install".
+
+.SH EXIT STATUS
+\fB0\fP \- normal exit
+
+\fB1\fP \- missing command line argument
+
+\fB2\fP \- buildfile not found
+
+\fB3\fP \- popen failed
