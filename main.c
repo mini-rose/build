@@ -22,7 +22,7 @@
 /* Default values (spec compliant). */
 #define BUILD_DIR       "builddir"
 #define BUILD_OUT       "program"
-#define BUILD_CC        "cc"
+#define BUILD_CC        "c99"
 
 #define STRSIZE         128
 
@@ -38,20 +38,34 @@ struct str_list
 struct config
 {
     struct str_list sources;
-    struct str_list include;
     struct str_list flags;
     char *buildfile;
     char *builddir;
     char *cc;
     char *out;
-    bool show_cmds;
-    bool show_debug;
+    bool explain;
     bool only_setup;
     bool user_sources;
 };
 
+enum field_type_e
+{
+    FIELD_STR,
+    FIELD_STRLIST
+};
+
+/* We can represent each modyfiable config field as a name and the type
+   of the value. */
+struct config_field
+{
+    const char *name;
+    enum field_type_e type;
+    void *val;
+    const char *default_val;
+};
+
 int parse_buildfile(struct config *config);
-void parse_sources(struct str_list *sources, char *str);
+void parse_sources(struct str_list *sources);
 void resolve_paths(struct config *config);
 void config_free(struct config *config);
 void config_dump(struct config *config);
@@ -88,11 +102,8 @@ int main(int argc, char **argv)
             usage();
 
         switch (argv[i][1]) {
-            case 'c':
-                config.show_cmds = true;
-                break;
-            case 'd':
-                config.show_debug = true;
+            case 'e':
+                config.explain = true;
                 break;
             case 'f':
                 if (i + 1 >= argc) {
@@ -123,9 +134,6 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    if (config.show_debug)
-        config_dump(&config);
-
     /* Only compile when any sources are present and the user did not specify
        the -s flag. */
     if (!config.only_setup && config.sources.size)
@@ -136,9 +144,19 @@ int main(int argc, char **argv)
 
 int parse_buildfile(struct config *config)
 {
-    char *buf, *tmpstr;
+    char *buf, *val;
     FILE *buildfile;
     size_t len;
+
+    /* Set up config fields. */
+    const size_t nconfig_fields = 5;
+    const struct config_field config_fields[] = {
+        {"cc", FIELD_STR, &config->cc, BUILD_CC},
+        {"src", FIELD_STRLIST, &config->sources, NULL},
+        {"flags", FIELD_STRLIST, &config->flags, NULL},
+        {"out", FIELD_STR, &config->out, BUILD_OUT},
+        {"builddir", FIELD_STR, &config->builddir, BUILD_DIR},
+    };
 
     buildfile = fopen(config->buildfile, "r");
     if (!buildfile)
@@ -162,43 +180,57 @@ int parse_buildfile(struct config *config)
            will only take the keyword into consideration. */
         len = wordlen(buf);
         buf[len] = 0;
+        val = lstrip(buf + len + 1);
 
-        if (strcmp(buf, "cc") == 0) {
-            config->cc = lstrip(buf + len + 1);
-        } else if (strcmp(buf, "src") == 0) {
-            config->user_sources = true;
-            tmpstr = lstrip(buf + len + 1);
-            parse_sources(&config->sources, tmpstr);
-            free(tmpstr);
-        } else if (strcmp(buf, "out") == 0) {
-            config->out = lstrip(buf + len + 1);
-        } else if (strcmp(buf, "builddir") == 0) {
-            config->builddir = lstrip(buf + len + 1);
-        } else if (strcmp(buf, "flags") == 0) {
-            tmpstr = lstrip(buf + len + 1);
-            str_list_append(&config->flags, tmpstr);
-            free(tmpstr);
-        } else if (strcmp(buf, "include") == 0) {
-            splitstr(&config->include, buf + len + 1);
+        /* Use the config_fields table to assign values. */
+
+        for (size_t i = 0; i < nconfig_fields; i++) {
+            if (strcmp(buf, config_fields[i].name) != 0)
+                continue;
+
+            if (config_fields[i].type == FIELD_STR) {
+                free(* (char **) config_fields[i].val);
+                * (char **) config_fields[i].val = strdup(val);
+            }
+
+            if (config_fields[i].type == FIELD_STRLIST) {
+                /* If the user modified the src option, we no longer want to
+                   get the default wildcard, because the user may want an empty
+                   src option. */
+                if (strcmp(config_fields[i].name, "src") == 0)
+                    config->user_sources = true;
+
+                splitstr(config_fields[i].val, val);
+            }
         }
+
+        free(val);
     }
 
-    /* Provide default values if missing. */
+    parse_sources(&config->sources);
 
-    if (!config->cc) {
-        config->cc = strdup(BUILD_CC);
-    } if (!config->user_sources) {
+    /* Set defualt strings if missing */
+
+    for (size_t i = 0; i < nconfig_fields; i++) {
+        if (config_fields[i].type != FIELD_STR
+            || * (char **) config_fields[i].val != NULL) {
+            continue;
+        }
+
+        * (char **) config_fields[i].val
+            = strdup(config_fields[i].default_val);
+    }
+
+    if (!config->user_sources)
         config->sources = find('f', "*.c");
-    } if (!config->out) {
-        config->out = strdup(BUILD_OUT);
-    } if (!config->builddir) {
-        config->builddir = strdup(BUILD_DIR);
-    } if (!config->include.size) {
-        config->include = find('d', "inc*");
-    }
 
     free(buf);
     fclose(buildfile);
+
+    if (config->explain) {
+        printf("Parsing the buildfile returned:\n");
+        config_dump(config);
+    }
 
     return 0;
 }
@@ -216,8 +248,6 @@ void compile(struct config *config)
     cmdsize += strlen(config->cc) + 1;
     for (size_t i = 0; i < config->flags.size; i++)
         cmdsize += strlen(config->flags.strs[i]) + 1;
-    for (size_t i = 0; i < config->include.size; i++)
-        cmdsize += strlen(config->include.strs[i]) + 4;
 
     /* Add an additional 128 bytes for the file name */
 
@@ -250,13 +280,8 @@ void compile(struct config *config)
             strcat(cmd, config->flags.strs[i]);
         }
 
-        for (size_t i = 0; i < config->include.size; i++) {
-            strcat(cmd, " -I");
-            strcat(cmd, config->include.strs[i]);
-        }
-
-        if (config->show_cmds)
-            printf("%s\n", cmd);
+        if (config->explain)
+            printf("running: %s\n", cmd);
         system(cmd);
     }
 
@@ -271,19 +296,14 @@ void compile(struct config *config)
         strcat(cmd, config->flags.strs[i]);
     }
 
-    for (size_t i = 0; i < config->include.size; i++) {
-        strcat(cmd, " -I");
-        strcat(cmd, config->include.strs[i]);
-    }
-
     for (size_t i = 0; i < config->sources.size; i++) {
         snprintf(strbuf, STRSIZE, " %s/%s.o", config->builddir,
                 config->sources.strs[i]);
         strcat(cmd, strbuf);
     }
 
-    if (config->show_cmds)
-        printf("%s\n", cmd);
+    if (config->explain)
+        printf("linking: %s\n", cmd);
     system(cmd);
 
     removedir(config->builddir);
@@ -349,7 +369,6 @@ struct str_list find(char type, char *name)
 void config_free(struct config *config)
 {
     str_list_free(&config->sources);
-    str_list_free(&config->include);
     str_list_free(&config->flags);
     free(config->buildfile);
     free(config->builddir);
@@ -369,10 +388,6 @@ void config_dump(struct config *config)
     printf("flags:\n");
     for (size_t i = 0; i < config->flags.size; i++)
         printf("  %s\n", config->flags.strs[i]);
-
-    printf("include:\n");
-    for (size_t i = 0; i < config->include.size; i++)
-        printf("  %s\n", config->include.strs[i]);
 }
 
 void str_list_free(struct str_list *list)
@@ -393,8 +408,7 @@ void usage()
     printf(
         "usage: build [-cdfhsv] [target]\n"
         "Minimal build system\n\n"
-        "  -c           output commands to stdout\n"
-        "  -d           display debug information\n"
+        "  -e           explain what is going on\n"
         "  -f <file>    path to a different buildfile\n"
         "  -h           show this page\n"
         "  -s           only setup, do not start compiling\n"
@@ -403,27 +417,30 @@ void usage()
     exit(0);
 }
 
-void parse_sources(struct str_list *sources, char *str)
+void parse_sources(struct str_list *sources)
 {
-    struct str_list tmp_list = {0};
-    struct str_list found_sources;
+    /* Expand any wildcards and add them back into the sources. */
+    struct str_list expanded_sources;
+    size_t original_nsources;
 
-    /* Split the string and then read each file. */
-    splitstr(&tmp_list, str);
-    for (size_t i = 0; i < tmp_list.size; i++) {
-        if (tmp_list.strs[i][0] != '*') {
-            str_list_append(sources, tmp_list.strs[i]);
+    original_nsources = sources->size;
+
+    for (size_t i = 0; i < original_nsources; i++) {
+        if (!strchr(sources->strs[i], '*'))
             continue;
-        }
 
-        /* Use find() for the wildcards. */
-        found_sources = find('f', tmp_list.strs[i]);
-        for (size_t j = 0; j < found_sources.size; j++)
-            str_list_append(sources, found_sources.strs[j]);
-        str_list_free(&found_sources);
+        expanded_sources = find('f', sources->strs[i]);
+        if (!expanded_sources.size)
+            continue;
+
+        /* Replace the wildcard string with the first found file. */
+        free(sources->strs[i]);
+        sources->strs[i] = strdup(expanded_sources.strs[0]);
+        for (size_t j = 1; j < expanded_sources.size; j++)
+            str_list_append(sources, expanded_sources.strs[j]);
+
+        str_list_free(&expanded_sources);
     }
-
-    str_list_free(&tmp_list);
 }
 
 char *lstrip(char *str)

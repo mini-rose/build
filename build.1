@@ -13,27 +13,21 @@ build \- Minimal build system
 
 .SH SYNOPSIS
 .PP
-\fBbuild\fP [-cdfhsv] [target]
+\fBbuild\fP [-efhsv] [target]
 
 
 .SH DESCRIPTION
 .PP
-\fBbuild\fP is a minimal build system for easily compiling C projects (or
-other, if you want to try). It's main goal is to be as clean and as simple
-as possible, while still being familiar to already existing build systems
-like GNU make. It's designed to easily integrate with a shell script, which
-will execute at certain times, like @after or @before the build tool runs.
+\fBbuild\fP is a minimal build system, with the main design goal being
+simplicity, while still being familiar and easy to learn.
 
 This manpage is for \fBbuild\fP version 4.
 
 
 .SH OPTIONS
 .PP
-\fB\-c\fP
-  Output commands to stdout while executing them.
-
-\fB\-d\fP
-  Display debug information about the compilation configuration.
+\fB\-e\fP
+  Explain what is going on while building the project.
 
 \fB\-f <file>\fP
   Path to a different buildfile. Note that this also changes the working
@@ -53,37 +47,25 @@ This manpage is for \fBbuild\fP version 4.
 
 \fBtarget\fP
   Name of the target to call. A target is defined in the buildfile and prefixed
-  with a "@" sign. Read more in the \fBBUILDFILE-TARGET\fP section.
+  with a "@" sign. Read more in the \fBBUILDFILE TARGET\fP section.
 
 
 .SH BUILDFILE
 .PP
 In order to build a project a \fBbuildfile\fP is required. The buildfile may
-even be empty, as long as it's there it tells the build tool that this is a
-project it may compile. A \fBbuildfile\fP consists of 2 types of lines:
-a comment or an option line. The latter contains a keyword and some value
-which is split from the keyword with atleast a single whitespace. With this
-syntax a buildfile can stay clean and readable.
-
-.PP
-This is the list of possible options a \fBbuildfile\fP can have:
+be empty. The buildfile is parsed based on newlines, so each line represents
+a different option. This is the list of possible options a buildfile can have:
 
 \fBcc\fP
   Name of the compiler to use. (default: c99)
 
 \fBsrc\fP
-  List of sources. Apart from regular filenames, you may use a wildcard which
-  compares anything with the same file extension. For example, if you want all
-  C files you can use "*.c". All filenames are space-seperated. Leaving this
-  option empty will not compile anything, creating a "target-only" buildfile.
-  (default: *.c)
+  Source files. Each source file is whitespace seperated. You may also use
+  a wildcard (any string with a *), which uses the `find` tool. Leaving this
+  option empty will stop the compilation process. (default: *.c)
 
 \fBflags\fP
-  Flags to pass to the compiler. Note that include directories should be added
-  using the \fIinclude\fP option.
-
-\fBinclude\fP
-  A list of directories to include using the -I flag. (default: include or inc)
+  Flags to pass to the compiler.
 
 \fBout\fP
   Output file name. This will not create any directories, so you should create
@@ -95,7 +77,7 @@ This is the list of possible options a \fBbuildfile\fP can have:
   (default: builddir)
 
 
-.SH BUILDFILE-EXAMPLE
+.SH BUILDFILE EXAMPLE
 .PP
 Let's say we have a couple of .c files, we want to compile with clang and with
 -O2 optimization. The created binary should be called "my_program".
@@ -105,7 +87,7 @@ Let's say we have a couple of .c files, we want to compile with clang and with
     out     my_program
 
 
-.SH BUILDFILE-TARGET
+.SH BUILDFILE TARGET
 .PP
 A \fBtarget\fP is a custom option that runs a outside script. It can be created
 by prefixing a keyword with an "@" sign. For example, to create an installation
