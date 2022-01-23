@@ -1,4 +1,4 @@
-# Build unittests for functions
+# Build unittests
 
 cc      clang
 flags   -Wall -Wextra -O0 -fsanitize=address
