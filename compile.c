@@ -37,7 +37,6 @@ void compile(struct config *config)
            slashes in the filenames with dollar signs so we can just dump
            them into the builddir. */
         strlist_append(&original_paths, config->sources.strs[i]);
-
         strreplace(config->sources.strs[i], '/', '-');
 
         snprintf(cmd, cmdsize, "%s -c -o %s/%s.o %s", config->cc,
@@ -51,8 +50,18 @@ void compile(struct config *config)
 
         if (config->explain)
             printf("running: %s\n", cmd);
+
+        printf("\033[2K\r[%zu/%zu] Compiling %s...", i+1, config->sources.size,
+            original_paths.strs[i]);
+        if (config->explain)
+            printf("\n");
+
+        fflush(stdout);
         system(cmd);
     }
+
+    printf("\033[2K\r[%zu/%zu] Done\n", config->sources.size,
+        config->sources.size);
 
     /* Link it all */
 
