@@ -44,6 +44,12 @@ int parse_buildfile(struct config *config)
         buf[len] = 0;
         val = strlstrip(buf + len + 1);
 
+        if (*buf == '@') {
+            config_add_target(config, buf + 1, val);
+            free(val);
+            continue;
+        }
+
         /* Use the config_fields table to assign values. */
 
         for (size_t i = 0; i < nconfig_fields; i++) {

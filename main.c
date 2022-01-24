@@ -7,6 +7,7 @@
 int main(int argc, char **argv)
 {
     struct config config = {0};
+    size_t exit_status = 0;
     config.buildfile = strdup(BUILD_FILE);
 
     argc--;
@@ -15,8 +16,11 @@ int main(int argc, char **argv)
     /* Parse flags */
 
     for (int i = 0; i < argc; i++) {
-        if (argv[i][0] != '-')
+        /* This must be a target. */
+        if (argv[i][0] != '-') {
+            strlist_append(&config.called_targets, argv[i]);
             continue;
+        }
 
         /* Make life easier */
         if (strcmp(argv[i], "--help") == 0)
@@ -29,7 +33,8 @@ int main(int argc, char **argv)
             case 'f':
                 if (i + 1 >= argc) {
                     fprintf(stderr, "build: missing argument for -f\n");
-                    return EXIT_ARG;
+                    exit_status = EXIT_ARG;
+                    goto finish;
                 }
                 free(config.buildfile);
                 config.buildfile = strdup(argv[++i]);
@@ -42,18 +47,40 @@ int main(int argc, char **argv)
                 break;
             case 'v':
                 printf("%d\n", BUILD_VERSION);
-                exit(0);
+                goto finish;
                 break;
             default:
-                printf("build: unknown flag '-%c'\n", argv[i][1]);
+                fprintf(stderr, "build: unknown flag '-%c'\n", argv[i][1]);
         }
     }
 
     resolve_buildpath(&config);
 
     if (parse_buildfile(&config)) {
-        printf("build: %s not found\n", config.buildfile);
-        return EXIT_BUILDFILE;
+        fprintf(stderr, "build: %s not found\n", config.buildfile);
+        exit_status = EXIT_BUILDFILE;
+        goto finish;
+    }
+
+    /* As defined in the spec, if the user calls any target on the command line,
+       the project will not continue compiling and will instead just call all
+       the targets in the order they were defined on the command line. */
+    if (config.called_targets.size) {
+        size_t index;
+        char *called;
+        for (size_t i = 0; i < config.called_targets.size; i++) {
+            called = config.called_targets.strs[i];
+            index = config_find_target(&config, called);
+            if (index == INVALID_INDEX) {
+                fprintf(stderr, "build: %s is not a target\n", called);
+                exit_status = EXIT_TARGET;
+                goto finish;
+            }
+
+            system(config.targets[index]->cmd);
+        }
+
+        goto finish;
     }
 
     /* Only compile when any sources are present and the user did not specify
@@ -61,7 +88,9 @@ int main(int argc, char **argv)
     if (!config.only_setup && config.sources.size)
         compile(&config);
 
+finish:
     config_free(&config);
+    return exit_status;
 }
 
 void usage()

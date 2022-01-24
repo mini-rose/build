@@ -21,7 +21,7 @@ build \- Minimal build system
 \fBbuild\fP is a minimal build system, with the main design goal being
 simplicity, while still being familiar and easy to learn.
 
-This manpage is for \fBbuild\fP version 5.
+This manpage is for \fBbuild\fP version 6.
 
 
 .SH OPTIONS
@@ -92,13 +92,17 @@ Let's say we have a couple of .c files, we want to compile with clang and with
 
 .SH BUILDFILE TARGET
 .PP
-A \fBtarget\fP is a custom option that runs a outside script. It can be created
+A \fBtarget\fP is a custom option that runs a shell command. It can be created
 by prefixing a keyword with an "@" sign. For example, to create an installation
 target which calls a certain install.sh you may add this line to your buildfile:
 
-    @install install.sh
+    @install sh install.sh
 
 Then call the target with "build install".
+
+.PP
+If you select a target on the command line, \fBonly that target will be ran\fP,
+and the project will not continue compiling.
 
 .SH EXIT STATUS
 \fB0\fP \- normal exit
@@ -108,3 +112,5 @@ Then call the target with "build install".
 \fB2\fP \- buildfile not found
 
 \fB3\fP \- popen failed
+
+\fB4\fP \- unknown target

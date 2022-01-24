@@ -13,7 +13,7 @@
 #include <ftw.h>
 
 /* Version integer. This is shown when -v is passed. */
-#define BUILD_VERSION   5
+#define BUILD_VERSION   6
 
 /* Name of the buildfile. */
 #define BUILD_FILE      "buildfile"
@@ -24,18 +24,31 @@
 #define BUILD_CC        "c99"
 
 #define SMALLBUFSIZ     128
+#define INVALID_INDEX   ((size_t) -1)
 
 /* Exit status. */
                                     /* normal exit */
 #define EXIT_ARG        1           /* missing command line argument */
 #define EXIT_BUILDFILE  2           /* buildfile not found */
 #define EXIT_POPEN      3           /* popen failed */
+#define EXIT_TARGET     4           /* unknown target */
 
 
 struct strlist
 {
     char **strs;
     size_t size;
+};
+
+struct target
+{
+    char *name;
+    char *cmd;
+
+    /* Both strings are actually allocated here, so instead of 3 there is
+       only a single allocation. The `name` and `cmd` pointer point into this
+       array, which contains null-terminated string. */
+    char _data[];
 };
 
 /* All strings are stdup'ed into here, so they can be free'd. */
@@ -50,6 +63,9 @@ struct config
     bool explain;                   /* -e */
     bool only_setup;                /* -s */
     bool user_sources;
+    struct strlist called_targets;
+    struct target **targets;
+    size_t ntargets;
 };
 
 /* Type of the config field. */
@@ -101,6 +117,13 @@ int parse_buildfile(struct config *config);
 
 void config_free(struct config *config);
 void config_dump(struct config *config);
+
+/* Add a target to the config. Both strings are copied into a new slot. */
+void config_add_target(struct config *config, char *name, char *cmd);
+
+/* Find the target of the selected `name`, and returns the index of the target
+   if it's found. Otherwise, returns INVALID_INDEX. */
+size_t config_find_target(struct config *config, char *name);
 
 
 /* strlist.c */
