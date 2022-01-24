@@ -83,6 +83,16 @@ int main(int argc, char **argv)
         goto finish;
     }
 
+    /* If no targets have been specifically called, but the @__default target is
+       defined in the buildfile, we cannot compile the project - only run that
+       target. */
+    size_t t_index;
+    t_index = config_find_target(&config, "__default");
+    if (t_index != INVALID_INDEX) {
+        system(config.targets[t_index]->cmd);
+        goto finish;
+    }
+
     /* Only compile when any sources are present and the user did not specify
        the -s flag. */
     if (!config.only_setup && config.sources.size)

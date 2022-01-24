@@ -102,7 +102,9 @@ Then call the target with "build install".
 
 .PP
 If you select a target on the command line, \fBonly that target will be ran\fP,
-and the project will not continue compiling.
+and the project will not continue compiling. If you create a target named
+\fB@__default\fP, that target will be ran when just calling "build", meaning
+the buildfile will actually not build anything, but run that target.
 
 .SH EXIT STATUS
 \fB0\fP \- normal exit
