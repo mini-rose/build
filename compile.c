@@ -7,20 +7,9 @@
 void compile(struct config *config)
 {
     struct strlist original_paths = {0};
-    size_t cmdsize = 0, srcsize = 0;
     struct stat st = {0};
     char strbuf[SMALLBUFSIZ];
     char *cmd;
-
-    /* Calculate the command size. */
-
-    cmdsize += strlen(config->cc) + 1;
-    for (size_t i = 0; i < config->flags.size; i++)
-        cmdsize += strlen(config->flags.strs[i]) + 1;
-
-    /* Add an additional 128 bytes for the file name */
-
-    cmdsize += 128;
 
     /* Create the build directory for the objects */
 
@@ -29,9 +18,8 @@ void compile(struct config *config)
 
     /* Produce system() calls */
 
-    cmd = calloc(cmdsize, 1);
+    cmd = calloc(BUFSIZ, 1);
     for (size_t i = 0; i < config->sources.size; i++) {
-        srcsize += strlen(config->sources.strs[i]) + 4;
 
         /* Preserve the original file name, because we want to replace the
            slashes in the filenames with dollar signs so we can just dump
@@ -39,7 +27,7 @@ void compile(struct config *config)
         strlist_append(&original_paths, config->sources.strs[i]);
         strreplace(config->sources.strs[i], '/', '-');
 
-        snprintf(cmd, cmdsize, "%s -c -o %s/%s.o %s", config->cc,
+        snprintf(cmd, BUFSIZ, "%s -c -o %s/%s.o %s", config->cc,
                 config->builddir, config->sources.strs[i],
                 original_paths.strs[i]);
 
@@ -63,9 +51,8 @@ void compile(struct config *config)
 
     /* Link it all */
 
-    free(cmd);
-    cmd = calloc(cmdsize + srcsize, 1);
-    snprintf(cmd, cmdsize, "%s -o %s", config->cc, config->out);
+    memset(cmd, 0, BUFSIZ);
+    snprintf(cmd, BUFSIZ, "%s -o %s", config->cc, config->out);
 
     for (size_t i = 0; i < config->flags.size; i++) {
         strcat(cmd, " ");
