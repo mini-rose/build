@@ -17,11 +17,10 @@ build \- Minimal build system
 
 
 .SH DESCRIPTION
-.PP
 \fBbuild\fP is a minimal build system, with the main design goal being
 simplicity, while still being familiar and easy to learn.
 
-This manpage is for \fBbuild\fP version 6.
+This manpage is for \fBbuild\fP version 7.
 
 
 .SH OPTIONS
@@ -51,7 +50,6 @@ This manpage is for \fBbuild\fP version 6.
 
 
 .SH BUILDFILE
-.PP
 In order to build a project a \fBbuildfile\fP is required. The buildfile may
 be empty. The buildfile is parsed based on newlines, so each line represents
 a different option. This is the list of possible options a buildfile can have:
@@ -60,12 +58,28 @@ a different option. This is the list of possible options a buildfile can have:
   Name of the compiler to use. (default: c99)
 
 \fBsrc\fP
-  Source files. Each source file is whitespace seperated. You may also use
-  a wildcard (any string with a *), which uses the `find` tool. Prefix a file
-  name with "!" to exclude it from the sources list. Leaving this option empty
-  will stop the compilation process. First, the wildcards get expanded and only
-  then the files will be excluded. This means that you can "compile everything
-  apart from test.c" using: `src *.c !test.c`. (default: *.c)
+  List of source files, each file is space separated. Apart from regular paths
+  you may also define wildcards and excluded files. Wildcards are paths with
+  asterisks instead of the filenames. For example, "*.c" means any file that
+  ends with ".c", recursive from the root location. Depending on the syntax,
+  different items may be found. Because the official implementation of the
+  build tool uses `find` to locate files, it is used to provide examples of how
+  certain wildcards will be compiled.
+
+  Assuming that '$W' is the wildcard path, the compiled `find` command would
+  look like this: "find $(dirname $W) -type f -name $(basename $W)".
+
+  After expanding all wildcards, the buildfile parser does a second pass
+  selecting all paths prefixed with a "!" to be removed from the path list.
+  Exclude paths do NOT have a wildcard functionality, they can only exclude
+  single files or whole directories. If you want to cherry pick excluded files,
+  it has to be done by single file paths. For example, "*.c !test.c" means that
+  all files ending with ".c" will be selected, and test.c will be excluded.
+
+  Because of the double pass system, the excluded paths do not have to be after
+  the wildcards. As for excluding directories, the path to the directory must
+  end with a "/". For example, "!test" will exclude a file named test while
+  "!test/" will exclude a directory named test.
 
 \fBflags\fP
   Flags to pass to the compiler.
@@ -81,7 +95,6 @@ a different option. This is the list of possible options a buildfile can have:
 
 
 .SH BUILDFILE EXAMPLE
-.PP
 Let's say we have a couple of .c files, we want to compile with clang and with
 -O2 optimization. The created binary should be called "my_program".
 
@@ -91,7 +104,6 @@ Let's say we have a couple of .c files, we want to compile with clang and with
 
 
 .SH BUILDFILE TARGET
-.PP
 A \fBtarget\fP is a custom option that runs a shell command. It can be created
 by prefixing a keyword with an "@" sign. For example, to create an installation
 target which calls a certain install.sh you may add this line to your buildfile:
@@ -100,7 +112,6 @@ target which calls a certain install.sh you may add this line to your buildfile:
 
 Then call the target with "build install".
 
-.PP
 If you select a target on the command line, \fBonly that target will be ran\fP,
 and the project will not continue compiling. You may also create special targets
 in your buildfile that work like "hooks", they automatically get executed at

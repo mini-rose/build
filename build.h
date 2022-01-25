@@ -13,7 +13,7 @@
 #include <ftw.h>
 
 /* Version integer. This is shown when -v is passed. */
-#define BUILD_VERSION   6
+#define BUILD_VERSION   7
 
 /* Name of the buildfile. */
 #define BUILD_FILE      "buildfile"
@@ -101,7 +101,7 @@ void remove_excluded(struct strlist *filenames);
 
 /* Put the filenames into `output` from "find . -type `type` -name `name`."
    Returns the amount of files found. */
-int find(struct strlist *output, char type, char *name);
+int find(struct strlist *output, char type, char *dir, char *name);
 
 /* Recursively remove the directory at the given path. Same as rm -rf `path`. */
 void removedir(char *path);

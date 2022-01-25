@@ -49,7 +49,7 @@ void compile(struct config *config)
         }
 
         if (config->explain)
-            printf("running: %s\n", cmd);
+            printf("issuing: %s\n", cmd);
 
         printf("\033[2K\r[%zu/%zu] Compiling %s...", i+1, config->sources.size,
                 original_paths.strs[i]);

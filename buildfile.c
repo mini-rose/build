@@ -96,7 +96,7 @@ int parse_buildfile(struct config *config)
     }
 
     if (!config->user_sources)
-        find(&config->sources, 'f', "*.c");
+        find(&config->sources, 'f', ".", "*.c");
 
     free(buf);
     fclose(buildfile);

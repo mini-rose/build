@@ -6,6 +6,7 @@
 void expand_wildcards(struct strlist *filenames)
 {
     struct strlist expanded_filenames = {0};
+    char *dirp, *basep, *p_dirp, *p_basep;
     size_t nfilenames;
 
     nfilenames = filenames->size;
@@ -14,7 +15,19 @@ void expand_wildcards(struct strlist *filenames)
         if (!strchr(filenames->strs[i], '*'))
             continue;
 
-        find(&expanded_filenames, 'f', filenames->strs[i]);
+        /* As per spec, the wildcard path needs to be split into the `dirname`
+           and `basename` of the path in order for the `find` command to work
+           properly. And because basename() and dirname() are strange functions,
+           we need 4 char pointers to store a single path. */
+        dirp    = strdup(filenames->strs[i]);
+        basep   = strdup(filenames->strs[i]);
+        p_dirp  = dirname(dirp);
+        p_basep = basename(basep);
+
+        find(&expanded_filenames, 'f', p_dirp, p_basep);
+        free(dirp);
+        free(basep);
+
         if (!expanded_filenames.size)
             continue;
 
@@ -50,6 +63,7 @@ void remove_excluded(struct strlist *filenames)
        it, instead of iterating over the orignal one n^2 times. */
     struct strlist new_list = {0};
     struct strlist exclude_list = {0};
+    size_t size;
 
     /* Collect the excluded filenames. */
 
@@ -72,10 +86,23 @@ void remove_excluded(struct strlist *filenames)
         if (!filenames->strs[i])
             continue;
 
-        if (strlist_contains(&exclude_list, filenames->strs[i]))
-            continue;
+        bool exclude_this_file = false;
+        for (size_t j = 0; j < exclude_list.size; j++) {
+            size = strlen(exclude_list.strs[j]);
+            if (exclude_list.strs[j][size - 1] != '/')
+                continue;
 
-        strlist_append(&new_list, filenames->strs[i]);
+            if (strncmp(filenames->strs[i], exclude_list.strs[j], size) == 0) {
+                exclude_this_file = true;
+                break;
+            }
+        }
+
+        if (strlist_contains(&exclude_list, filenames->strs[i]))
+            exclude_this_file = true;
+
+        if (!exclude_this_file)
+            strlist_append(&new_list, filenames->strs[i]);
     }
 
     /* Move the new_list into the filenames list. */
@@ -86,15 +113,15 @@ void remove_excluded(struct strlist *filenames)
     filenames->strs = new_list.strs;
 }
 
-int find(struct strlist *output, char type, char *name)
+int find(struct strlist *output, char type, char *dir, char *name)
 {
     int added_amount = 0;
     char path[PATH_MAX];
     FILE *res;
 
-    /* popen a find command and read the result into the strlist */
+    snprintf(path, PATH_MAX, "find %s -type %c -name '%s'", dir, type, name);
 
-    snprintf(path, PATH_MAX, "find -type %c -name '%s'", type, name);
+    /* popen a find command and read the result into the strlist */
     res = popen(path, "r");
     if (!res) {
         perror("build: failed to popen");
@@ -110,8 +137,9 @@ int find(struct strlist *output, char type, char *name)
         }
 
         /* Without the +2, the cmd would contain the starting "./" location,
-           which we don't want. */
-        strlist_append(output, path + 2);
+           which we don't want. But if we're looking from a directory that
+           is not a ".", the "./" does not show up in find. */
+        strlist_append(output, path + (*dir == '.' ? 2 : 0));
         added_amount++;
     }
 
