@@ -125,6 +125,10 @@ void config_add_target(struct config *config, char *name, char *cmd);
    if it's found. Otherwise, returns INVALID_INDEX. */
 size_t config_find_target(struct config *config, char *name);
 
+/* Runs the given target. If the target is not found, return 1. Otherwise
+   return 0. */
+int config_call_target(struct config *config, char *name);
+
 
 /* strlist.c */
 

@@ -62,22 +62,21 @@ int main(int argc, char **argv)
         goto finish;
     }
 
+    /* As per spec, call @__setup before anything else. */
+    config_call_target(&config, "__setup");
+
     /* As defined in the spec, if the user calls any target on the command line,
        the project will not continue compiling and will instead just call all
        the targets in the order they were defined on the command line. */
     if (config.called_targets.size) {
-        size_t index;
         char *called;
         for (size_t i = 0; i < config.called_targets.size; i++) {
             called = config.called_targets.strs[i];
-            index = config_find_target(&config, called);
-            if (index == INVALID_INDEX) {
+            if (config_call_target(&config, called)) {
                 fprintf(stderr, "build: %s is not a target\n", called);
                 exit_status = EXIT_TARGET;
                 goto finish;
             }
-
-            system(config.targets[index]->cmd);
         }
 
         goto finish;
@@ -86,12 +85,8 @@ int main(int argc, char **argv)
     /* If no targets have been specifically called, but the @__default target is
        defined in the buildfile, we cannot compile the project - only run that
        target. */
-    size_t t_index;
-    t_index = config_find_target(&config, "__default");
-    if (t_index != INVALID_INDEX) {
-        system(config.targets[t_index]->cmd);
+    if (!config_call_target(&config, "__default"))
         goto finish;
-    }
 
     /* Only compile when any sources are present and the user did not specify
        the -s flag. */
@@ -99,6 +94,9 @@ int main(int argc, char **argv)
         compile(&config);
 
 finish:
+    /* As per spec, call @__finish after everything builds. */
+    config_call_target(&config, "__finish");
+
     config_free(&config);
     return exit_status;
 }

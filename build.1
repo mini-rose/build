@@ -102,9 +102,22 @@ Then call the target with "build install".
 
 .PP
 If you select a target on the command line, \fBonly that target will be ran\fP,
-and the project will not continue compiling. If you create a target named
-\fB@__default\fP, that target will be ran when just calling "build", meaning
-the buildfile will actually not build anything, but run that target.
+and the project will not continue compiling. You may also create special targets
+in your buildfile that work like "hooks", they automatically get executed at
+certain points of the build process and do not get blocked if the user defines
+a target.
+
+\fB@__default\fP
+  If this target is defined, running "build" will _only_ call that target,
+  disabling the compilation & linking stages. Note that __setup & __finish
+  will still be called.
+
+\fB@__setup\fP
+  Ran before anything else happens.
+
+\fB@__finish\fP
+  Ran after everything has finished.
+
 
 .SH EXIT STATUS
 \fB0\fP \- normal exit

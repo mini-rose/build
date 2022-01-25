@@ -75,3 +75,15 @@ size_t config_find_target(struct config *config, char *name)
 
     return INVALID_INDEX;
 }
+
+int config_call_target(struct config *config, char *name)
+{
+    size_t index;
+
+    index = config_find_target(config, name);
+    if (index == INVALID_INDEX)
+        return 1;
+
+    system(config->targets[index]->cmd);
+    return 0;
+}
