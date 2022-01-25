@@ -27,6 +27,13 @@ int main()
         ASSERT(wordlen("   !!!"), 0);
     }
 
+    TEST("linelen") {
+        ASSERT(linelen("th\nis is a line"), 2);
+        ASSERT(linelen("this is a line"), 14);
+        ASSERT(linelen(""), 0);
+        ASSERT(linelen("   this is a line\\   \n"), 21);
+    }
+
     TEST("strlstrip") {
         char *a, *b, *c;
 

@@ -12,10 +12,19 @@ size_t wordlen(char *word)
     char c;
 
     c = word[len];
-    while (c != '\0' && !iswhitespace(c)) {
-        len++;
-        c = word[len];
-    }
+    while (c && !iswhitespace(c))
+        c = word[++len];
+    return len;
+}
+
+size_t linelen(char *line)
+{
+    size_t len = 0;
+    char c;
+
+    c = line[len];
+    while (c && c != '\n')
+        c = line[++len];
     return len;
 }
 

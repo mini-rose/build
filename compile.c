@@ -52,16 +52,14 @@ void compile(struct config *config)
             printf("running: %s\n", cmd);
 
         printf("\033[2K\r[%zu/%zu] Compiling %s...", i+1, config->sources.size,
-            original_paths.strs[i]);
+                original_paths.strs[i]);
+
         if (config->explain)
             printf("\n");
 
         fflush(stdout);
         system(cmd);
     }
-
-    printf("\033[2K\r[%zu/%zu] Done\n", config->sources.size,
-        config->sources.size);
 
     /* Link it all */
 
@@ -80,6 +78,9 @@ void compile(struct config *config)
         strcat(cmd, strbuf);
     }
 
+    printf("\033[2K\r[%zu/%zu] Linking...", config->sources.size,
+            config->sources.size);
+
     if (config->explain)
         printf("linking: %s\n", cmd);
     system(cmd);
@@ -87,4 +88,7 @@ void compile(struct config *config)
     removedir(config->builddir);
     strlist_free(&original_paths);
     free(cmd);
+
+    printf("\033[2K\r[%zu/%zu] Done\n", config->sources.size,
+        config->sources.size);
 }

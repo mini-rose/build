@@ -8,7 +8,7 @@ int parse_buildfile(struct config *config)
 {
     char *buf, *val;
     FILE *buildfile;
-    size_t len;
+    size_t len, buflen;
 
     /* Set up config fields. */
     const size_t nconfig_fields = 5;
@@ -27,16 +27,21 @@ int parse_buildfile(struct config *config)
     buf = calloc(BUFSIZ, 1);
 
     while (fgets(buf, BUFSIZ, buildfile)) {
-        /* Skip empty lines & lines with hashes. */
+        /* Skip empty & commented lines. */
         if (iswhitespace(*buf) || *buf == '\n' || *buf == '#')
             continue;
 
-        for (size_t i = 0; i < BUFSIZ; i++) {
-            if (buf[i] == '\n') {
-                buf[i] = 0;
-                break;
-            }
+        buflen = linelen(buf);
+
+        /* If the newline is escaped, get another line. */
+        while (buf[buflen-1] == '\\') {
+            fgets(buf + buflen, BUFSIZ - buflen, buildfile);
+            // buf[buflen] = ' ';
+            buf[buflen-1] = ' ';
+            buflen = linelen(buf);
         }
+
+        buf[buflen] = '\0';
 
         /* We want to end the string right after the keyword, so libc functions
            will only take the keyword into consideration. */

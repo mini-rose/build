@@ -149,6 +149,10 @@ bool iswhitespace(char c);
    closest whitespace. Stops at a null byte. */
 size_t wordlen(char *word);
 
+/* Works like, strlen, but instead of the null terminator it searches for the
+   closes newline. Stops at a null byte. */
+size_t linelen(char *line);
+
 /* Return a copy of the lstripped string. */
 char *strlstrip(char *str);
 
