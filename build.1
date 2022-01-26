@@ -40,6 +40,9 @@ This manpage is for \fBbuild\fP version 7.
 \fB\-s\fP
   Do not compile, end after setup and buildfile parsing.
 
+\fB\-t\fP
+  Compile on a single thread.
+
 \fB\-v\fP
   Show the version number. This is always a single integer number so you may
   compare the value in scripts if you require any perticular feature.
@@ -140,3 +143,5 @@ a target.
 \fB3\fP \- popen failed
 
 \fB4\fP \- unknown target
+
+\fB5\fP \- failed to create thread

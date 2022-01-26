@@ -3,6 +3,7 @@
 
 #define _XOPEN_SOURCE 500
 #include <sys/stat.h>
+#include <pthread.h>
 #include <stdbool.h>
 #include <limits.h>
 #include <unistd.h>
@@ -11,6 +12,13 @@
 #include <libgen.h>
 #include <stdio.h>
 #include <ftw.h>
+
+#if __linux__ || __APPLE__
+/* Use the actual get_nprocs() function. */
+# include <sys/sysinfo.h>
+#else
+# define get_nprocs()   8
+#endif
 
 /* Version integer. This is shown when -v is passed. */
 #define BUILD_VERSION   7
@@ -32,7 +40,10 @@
 #define EXIT_BUILDFILE  2           /* buildfile not found */
 #define EXIT_POPEN      3           /* popen failed */
 #define EXIT_TARGET     4           /* unknown target */
+#define EXIT_THREAD     5           /* failed to create thread */
 
+/* Mark a function as a thread function. */
+#define THREAD
 
 struct strlist
 {
@@ -54,6 +65,7 @@ struct target
 /* All strings are stdup'ed into here, so they can be free'd. */
 struct config
 {
+    pthread_mutex_t mod_lock;       /* modify lock */
     struct strlist sources;         /* src */
     struct strlist flags;           /* flags */
     char *buildfile;                /* -f */
@@ -62,6 +74,7 @@ struct config
     char *out;                      /* out */
     bool explain;                   /* -e */
     bool only_setup;                /* -s */
+    bool use_single_thread;         /* -t */
     bool user_sources;
     struct strlist called_targets;
     struct target **targets;
@@ -84,6 +97,15 @@ struct config_field
     void *val;
     const char *default_val;
 };
+
+struct thread_task
+{
+    struct config *config;
+    int tid;
+    int from;
+    int to;
+};
+
 
 /* fs.c */
 

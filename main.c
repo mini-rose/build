@@ -45,6 +45,9 @@ int main(int argc, char **argv)
             case 's':
                 config.only_setup = true;
                 break;
+            case 't':
+                config.use_single_thread = true;
+                break;
             case 'v':
                 printf("%d\n", BUILD_VERSION);
                 goto finish;
@@ -110,6 +113,7 @@ void usage()
         "  -f <file>    path to a different buildfile\n"
         "  -h           show this page\n"
         "  -s           only setup, do not start compiling\n"
+        "  -t           compile on a single thread\n"
         "  -v           show the version number\n"
     );
     exit(0);

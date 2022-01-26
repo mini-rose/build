@@ -4,6 +4,10 @@
 #include "build.h"
 
 
+static void set_config_defaults(struct config *config, size_t nfields,
+        const struct config_field *fields);
+
+
 int parse_buildfile(struct config *config)
 {
     char *buf, *val;
@@ -82,21 +86,7 @@ int parse_buildfile(struct config *config)
 
     expand_wildcards(&config->sources);
     remove_excluded(&config->sources);
-
-    /* Set defualt strings if missing */
-
-    for (size_t i = 0; i < nconfig_fields; i++) {
-        if (config_fields[i].type != FIELD_STR
-            || * (char **) config_fields[i].val != NULL) {
-            continue;
-        }
-
-        * (char **) config_fields[i].val
-            = strdup(config_fields[i].default_val);
-    }
-
-    if (!config->user_sources)
-        find(&config->sources, 'f', ".", "*.c");
+    set_config_defaults(config, nconfig_fields, config_fields);
 
     free(buf);
     fclose(buildfile);
@@ -107,4 +97,21 @@ int parse_buildfile(struct config *config)
     }
 
     return 0;
+}
+
+static void set_config_defaults(struct config *config, size_t nfields,
+        const struct config_field *fields)
+{
+    for (size_t i = 0; i < nfields; i++) {
+        if (fields[i].type != FIELD_STR || * (char **) fields[i].val)
+            continue;
+        * (char **) fields[i].val = strdup(fields[i].default_val);
+    }
+
+    if (!config->user_sources)
+        find(&config->sources, 'f', ".", "*.c");
+
+    /* Use -pipe when possible to limit hard drive usage. */
+    if (!strcmp(config->cc, "clang") || !strcmp(config->cc, "gcc"))
+        strlist_append(&config->flags, "-pipe");
 }

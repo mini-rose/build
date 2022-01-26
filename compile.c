@@ -3,66 +3,171 @@
 
 #include "build.h"
 
+/* Split config.soures.size tasks among `n` threads. The thread_tasks will be
+   filled with index ranges into the source array, so that it can be passed
+   as an argument to the thread. */
+void split_tasks(struct config *config, struct thread_task *tasks, int n);
+
+/* Run the given task. Launched as a pthread. */
+THREAD void *run_thread_task(struct thread_task *task);
+typedef void * (*thread_ft) (void *);
+
+/* Link all generated object files. */
+void link_object_files(struct config *config);
+
 
 void compile(struct config *config)
 {
-    struct strlist original_paths = {0};
+    struct thread_task *thread_tasks;
     struct stat st = {0};
-    char strbuf[SMALLBUFSIZ];
-    char *cmd;
+    pthread_t *threads;
+    int nprocs, ret;
 
     /* Create the build directory for the objects */
-
     if (stat(config->builddir, &st) == -1)
-        mkdir(config->builddir, 0700);
+        mkdir(config->builddir, 0775);
 
-    /* Produce system() calls */
+    if (config->use_single_thread) {
+        threads = NULL;
+        thread_tasks = malloc(sizeof(*thread_tasks));
+        thread_tasks[0] = (struct thread_task) {
+            .config = config,
+            .from = 0,
+            .to = config->sources.size - 1,
+            .tid = 0
+        };
 
-    cmd = calloc(BUFSIZ, 1);
-    for (size_t i = 0; i < config->sources.size; i++) {
+        run_thread_task(&thread_tasks[0]);
+        goto link_stage;
+    }
 
-        /* Preserve the original file name, because we want to replace the
-           slashes in the filenames with dollar signs so we can just dump
-           them into the builddir. */
-        strlist_append(&original_paths, config->sources.strs[i]);
-        strreplace(config->sources.strs[i], '/', '-');
+    /* Compile on threads. */
 
-        snprintf(cmd, BUFSIZ, "%s -c -o %s/%s.o %s", config->cc,
-                config->builddir, config->sources.strs[i],
-                original_paths.strs[i]);
+    nprocs = get_nprocs();
+    thread_tasks = calloc(nprocs, sizeof(*thread_tasks));
+    split_tasks(config, thread_tasks, nprocs);
 
-        for (size_t i = 0; i < config->flags.size; i++) {
+    threads = calloc(nprocs, sizeof(*threads));
+    for (int i = 0; i < nprocs; i++) {
+        /* Setup thread data */
+        thread_tasks[i].tid = i;
+        thread_tasks[i].config = config;
+
+        /* Stop creating threads if they have nothing to do. */
+        if (thread_tasks[i].from == -1)
+            break;
+
+        ret = pthread_create(&threads[i], NULL, (thread_ft) run_thread_task,
+                &thread_tasks[i]);
+        if (ret) {
+            fprintf(stderr, "failed to create a thread\n");
+            exit(EXIT_THREAD);
+        }
+    }
+
+    for (int i = 0; i < nprocs; i++) {
+        if (thread_tasks[i].from == -1)
+            break;
+        pthread_join(threads[i], NULL);
+    }
+
+link_stage:
+    link_object_files(config);
+
+    removedir(config->builddir);
+    free(thread_tasks);
+    free(threads);
+}
+
+void split_tasks(struct config *config, struct thread_task *tasks, int n)
+{
+    int tasks_left, tasks_per_thread, task_index, task_amount;
+
+    tasks_left = config->sources.size % n;
+    tasks_per_thread = (config->sources.size - tasks_left) / n;
+
+    for (int i = 0; i < n; i++)
+        tasks[i].from = tasks_per_thread;
+    for (int i = 0; i < tasks_left; i++)
+        tasks[i].from++;
+
+    /* Set the ranges for the tasks. */
+    task_index = 0;
+    for (int i = 0; i < n; i++) {
+        if (i >= (int) config->sources.size) {
+            tasks[i].from = -1;
+            tasks[i].to = -1;
+            continue;
+        }
+        task_amount = tasks[i].from;
+        tasks[i].from = task_index;
+        task_index += task_amount;
+        tasks[i].to = task_index - 1;
+    }
+
+    if (config->explain) {
+        for (int i = 0; i < n; i++) {
+            if (tasks[i].from == -1)
+                break;
+            printf("thread %d : %d,%d (%d tasks)\n", i, tasks[i].from,
+                    tasks[i].to, tasks[i].to - tasks[i].from + 1);
+        }
+    }
+}
+
+THREAD void *run_thread_task(struct thread_task *task)
+{
+    char cmd[BUFSIZ];
+    char *changed_path;
+
+    for (int i = task->from; i <= task->to; i++) {
+        if (task->config->explain)
+            printf("T%d : %s\n", task->tid, task->config->sources.strs[i]);
+
+        /* Replace the slashes with another char so we don't have to create
+           any directories. */
+        changed_path = strdup(task->config->sources.strs[i]);
+        strreplace(changed_path, '/', '-');
+
+        /* Construct the compile command. */
+        snprintf(cmd, BUFSIZ, "%s -c -o %s/%s.o %s ", task->config->cc,
+                task->config->builddir, changed_path,
+                task->config->sources.strs[i]);
+        for (size_t i = 0; i < task->config->flags.size; i++) {
             strcat(cmd, " ");
-            strcat(cmd, config->flags.strs[i]);
+            strcat(cmd, task->config->flags.strs[i]);
         }
 
-        if (config->explain)
-            printf("issuing: %s\n", cmd);
+        if (task->config->explain)
+            printf("issuing: '%s'\n", cmd);
 
-        printf("\033[2K\r[%zu/%zu] Compiling %s...", i+1, config->sources.size,
-                original_paths.strs[i]);
-
-        if (config->explain)
-            printf("\n");
+        printf("\033[2K\r[%d/%zu] Compiling %s...", i+1,
+                task->config->sources.size, task->config->sources.strs[i]);
 
         fflush(stdout);
         system(cmd);
+        free(changed_path);
     }
 
-    /* Link it all */
+    return NULL;
+}
 
-    memset(cmd, 0, BUFSIZ);
+void link_object_files(struct config *config)
+{
+    struct strlist objects = {0};
+    char cmd[BUFSIZ];
+
+    find(&objects, 'f', config->builddir, "*.o");
+
     snprintf(cmd, BUFSIZ, "%s -o %s", config->cc, config->out);
+    for (size_t i = 0; i < objects.size; i++) {
+        strcat(cmd, " ");
+        strcat(cmd, objects.strs[i]);
+    }
 
     for (size_t i = 0; i < config->flags.size; i++) {
         strcat(cmd, " ");
         strcat(cmd, config->flags.strs[i]);
-    }
-
-    for (size_t i = 0; i < config->sources.size; i++) {
-        snprintf(strbuf, SMALLBUFSIZ, " %s/%s.o", config->builddir,
-                config->sources.strs[i]);
-        strcat(cmd, strbuf);
     }
 
     printf("\033[2K\r[%zu/%zu] Linking...", config->sources.size,
@@ -72,10 +177,8 @@ void compile(struct config *config)
         printf("linking: %s\n", cmd);
     system(cmd);
 
-    removedir(config->builddir);
-    strlist_free(&original_paths);
-    free(cmd);
-
     printf("\033[2K\r[%zu/%zu] Done\n", config->sources.size,
         config->sources.size);
+
+    strlist_free(&objects);
 }
