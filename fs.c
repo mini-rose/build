@@ -15,10 +15,10 @@ void expand_wildcards(struct strlist *filenames)
         if (!strchr(filenames->strs[i], '*'))
             continue;
 
-        /* As per spec, the wildcard path needs to be split into the `dirname`
-           and `basename` of the path in order for the `find` command to work
-           properly. And because basename() and dirname() are strange functions,
-           we need 4 char pointers to store a single path. */
+        /* As per the manpage, the wildcard path needs to be split into the
+           `dirname` and `basename` of the path in order for the `find` command
+           to work properly. And because basename() and dirname() are strange
+           functions, we need 4 char pointers to store a single path. */
         dirp    = strdup(filenames->strs[i]);
         basep   = strdup(filenames->strs[i]);
         p_dirp  = dirname(dirp);

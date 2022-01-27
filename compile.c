@@ -117,7 +117,7 @@ void split_tasks(struct config *config, struct thread_task *tasks, int n)
 
 THREAD void *run_thread_task(struct thread_task *task)
 {
-    char cmd[BUFSIZ];
+    char cmd[LINESIZE];
     char *changed_path;
 
     for (int i = task->from; i <= task->to; i++) {
@@ -130,7 +130,7 @@ THREAD void *run_thread_task(struct thread_task *task)
         strreplace(changed_path, '/', '-');
 
         /* Construct the compile command. */
-        snprintf(cmd, BUFSIZ, "%s -c -o %s/%s.o %s ", task->config->cc,
+        snprintf(cmd, LINESIZE, "%s -c -o %s/%s.o %s ", task->config->cc,
                 task->config->builddir, changed_path,
                 task->config->sources.strs[i]);
         for (size_t i = 0; i < task->config->flags.size; i++) {
@@ -155,11 +155,11 @@ THREAD void *run_thread_task(struct thread_task *task)
 void link_object_files(struct config *config)
 {
     struct strlist objects = {0};
-    char cmd[BUFSIZ];
+    char cmd[LINESIZE];
 
     find(&objects, 'f', config->builddir, "*.o");
 
-    snprintf(cmd, BUFSIZ, "%s -o %s", config->cc, config->out);
+    snprintf(cmd, LINESIZE, "%s -o %s", config->cc, config->out);
     for (size_t i = 0; i < objects.size; i++) {
         strcat(cmd, " ");
         strcat(cmd, objects.strs[i]);

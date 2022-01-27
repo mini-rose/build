@@ -28,9 +28,9 @@ int parse_buildfile(struct config *config)
     if (!buildfile)
         return 1;
 
-    buf = calloc(BUFSIZ, 1);
+    buf = calloc(LINESIZE, 1);
 
-    while (fgets(buf, BUFSIZ, buildfile)) {
+    while (fgets(buf, LINESIZE, buildfile)) {
         /* Skip empty & commented lines. */
         if (iswhitespace(*buf) || *buf == '\n' || *buf == '#')
             continue;
@@ -39,7 +39,7 @@ int parse_buildfile(struct config *config)
 
         /* If the newline is escaped, get another line. */
         while (buf[buflen-1] == '\\') {
-            fgets(buf + buflen, BUFSIZ - buflen, buildfile);
+            fgets(buf + buflen, LINESIZE - buflen, buildfile);
             // buf[buflen] = ' ';
             buf[buflen-1] = ' ';
             buflen = linelen(buf);

@@ -84,6 +84,7 @@ int config_call_target(struct config *config, char *name)
     if (index == INVALID_INDEX)
         return 1;
 
+    /* RSD 10/4a: use atleast system() for the shell command */
     system(config->targets[index]->cmd);
     return 0;
 }

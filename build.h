@@ -26,10 +26,13 @@
 /* Name of the buildfile. */
 #define BUILD_FILE      "buildfile"
 
-/* Default values (spec compliant). */
+/* Default values (manpage compliant). */
 #define BUILD_DIR       "builddir"
 #define BUILD_OUT       "program"
 #define BUILD_CC        "c99"
+
+/* RSD 10/2a: provide atleast a 4095 char line buffer */
+#define LINESIZE        4096
 
 #define SMALLBUFSIZ     128
 #define INVALID_INDEX   ((size_t) -1)

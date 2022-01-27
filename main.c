@@ -65,12 +65,12 @@ int main(int argc, char **argv)
         goto finish;
     }
 
-    /* As per spec, call @__setup before anything else. */
+    /* RSD 10/4d: run __setup before anything else */
     config_call_target(&config, "__setup");
 
-    /* As defined in the spec, if the user calls any target on the command line,
-       the project will not continue compiling and will instead just call all
-       the targets in the order they were defined on the command line. */
+    /* As defined in the manpage, if the user calls any target on the command
+       line, the project will not continue compiling and will instead just call
+       all the targets in the order they were defined on the command line. */
     if (config.called_targets.size) {
         char *called;
         for (size_t i = 0; i < config.called_targets.size; i++) {
@@ -85,9 +85,9 @@ int main(int argc, char **argv)
         goto finish;
     }
 
-    /* If no targets have been specifically called, but the @__default target is
-       defined in the buildfile, we cannot compile the project - only run that
-       target. */
+    /* RSD 10/4c: If no targets have been specifically called, but the __default
+       target is defined in the buildfile, call that. Also as defined in the
+       manpage, we do not compile if this is the case. */
     if (!config_call_target(&config, "__default"))
         goto finish;
 
@@ -97,7 +97,7 @@ int main(int argc, char **argv)
         compile(&config);
 
 finish:
-    /* As per spec, call @__finish after everything builds. */
+    /* RSD 10/4e: run __finish after everything has happend */
     config_call_target(&config, "__finish");
 
     config_free(&config);
