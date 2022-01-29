@@ -1,8 +1,0 @@
-# Build unittests
-
-cc      clang
-flags   -Wall -Wextra -O0 -fsanitize=address
-out     test
-src     test.c ../strings.c ../strlist.c
-
-@run    ./test
