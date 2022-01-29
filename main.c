@@ -1,5 +1,7 @@
-/* Build tool entrypoint.
-   Copyright (C) 2022 bellrise */
+/*
+ * main.c - entrypoint
+ * Copyright (c) 2022 bellrise
+ */
 
 #include "build.h"
 
@@ -22,7 +24,6 @@ int main(int argc, char **argv)
             continue;
         }
 
-        /* Make life easier */
         if (strcmp(argv[i], "--help") == 0)
             usage();
 
@@ -68,9 +69,6 @@ int main(int argc, char **argv)
     /* RSD 10/4d: run __setup before anything else */
     config_call_target(&config, "__setup");
 
-    /* As defined in the manpage, if the user calls any target on the command
-       line, the project will not continue compiling and will instead just call
-       all the targets in the order they were defined on the command line. */
     if (config.called_targets.size) {
         char *called;
         for (size_t i = 0; i < config.called_targets.size; i++) {
@@ -82,6 +80,7 @@ int main(int argc, char **argv)
             }
         }
 
+		/* Don't compile if a target is passed */
         goto finish;
     }
 
@@ -91,8 +90,6 @@ int main(int argc, char **argv)
     if (!config_call_target(&config, "__default"))
         goto finish;
 
-    /* Only compile when any sources are present and the user did not specify
-       the -s flag. */
     if (!config.only_setup && config.sources.size)
         compile(&config);
 

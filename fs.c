@@ -1,7 +1,10 @@
-/* fs.c - filesystem & filename operations.
-   Copyright (C) 2022 bellrise */
+/*
+ * fs.c - filesystem & filename operations
+ * Copyright (c) 2022 bellrise
+ */
 
 #include "build.h"
+
 
 void expand_wildcards(struct strlist *filenames)
 {
@@ -10,15 +13,12 @@ void expand_wildcards(struct strlist *filenames)
     size_t nfilenames;
 
     nfilenames = filenames->size;
-
     for (size_t i = 0; i < nfilenames; i++) {
         if (!strchr(filenames->strs[i], '*'))
             continue;
 
         /* As per the manpage, the wildcard path needs to be split into the
-           `dirname` and `basename` of the path in order for the `find` command
-           to work properly. And because basename() and dirname() are strange
-           functions, we need 4 char pointers to store a single path. */
+           `dirname` and `basename` for `find`. */
         dirp    = strdup(filenames->strs[i]);
         basep   = strdup(filenames->strs[i]);
         p_dirp  = dirname(dirp);
@@ -58,9 +58,6 @@ void resolve_buildpath(struct config *config)
 
 void remove_excluded(struct strlist *filenames)
 {
-    /* Because we will be doing a lot of operations on the filenames list,
-       its easier if we just make a new one and push good file paths onto
-       it, instead of iterating over the orignal one n^2 times. */
     struct strlist new_list = {0};
     struct strlist exclude_list = {0};
     size_t size;
@@ -73,14 +70,10 @@ void remove_excluded(struct strlist *filenames)
                 continue;
             strlist_append(&exclude_list, filenames->strs[i] + 1);
 
-            /* We can now carefully remove the string from the list. */
             free(filenames->strs[i]);
             filenames->strs[i] = NULL;
         }
     }
-
-    /* Iterate over the filenames, and add only if they do not match anything
-       in the excluded list. */
 
     for (size_t i = 0; i < filenames->size; i++) {
         if (!filenames->strs[i])
@@ -121,7 +114,6 @@ int find(struct strlist *output, char type, char *dir, char *name)
 
     snprintf(path, PATH_MAX, "find %s -type %c -name '%s'", dir, type, name);
 
-    /* popen a find command and read the result into the strlist */
     res = popen(path, "r");
     if (!res) {
         perror("build: failed to popen");
@@ -136,9 +128,7 @@ int find(struct strlist *output, char type, char *dir, char *name)
             }
         }
 
-        /* Without the +2, the cmd would contain the starting "./" location,
-           which we don't want. But if we're looking from a directory that
-           is not a ".", the "./" does not show up in find. */
+		/* Remove ./ from path */
         strlist_append(output, path + (*dir == '.' ? 2 : 0));
         added_amount++;
     }

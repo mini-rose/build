@@ -1,5 +1,7 @@
-/* strlist.c - strlist struct operations
-   Copyright (C) 2022 bellrise */
+/*
+ * strlist.c - strlist struct operations
+ * Copyright (c) 2022 bellrise
+ */
 
 #include "build.h"
 

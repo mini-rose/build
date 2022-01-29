@@ -1,5 +1,7 @@
-/* Build tool header.
-   Copyright (C) 2022 bellrise */
+/*
+ * build.h - main header
+ * Copyright (c) 2022 bellrise
+ */
 
 #define _XOPEN_SOURCE 500
 #include <sys/stat.h>
@@ -23,10 +25,7 @@
 /* Version integer. This is shown when -v is passed. */
 #define BUILD_VERSION   7
 
-/* Name of the buildfile. */
 #define BUILD_FILE      "buildfile"
-
-/* Default values (manpage compliant). */
 #define BUILD_DIR       "builddir"
 #define BUILD_OUT       "program"
 #define BUILD_CC        "c99"
@@ -37,16 +36,12 @@
 #define SMALLBUFSIZ     128
 #define INVALID_INDEX   ((size_t) -1)
 
-/* Exit status. */
-                                    /* normal exit */
 #define EXIT_ARG        1           /* missing command line argument */
 #define EXIT_BUILDFILE  2           /* buildfile not found */
 #define EXIT_POPEN      3           /* popen failed */
 #define EXIT_TARGET     4           /* unknown target */
 #define EXIT_THREAD     5           /* failed to create thread */
 
-/* Mark a function as a thread function. */
-#define THREAD
 
 struct strlist
 {
@@ -65,10 +60,8 @@ struct target
     char _data[];
 };
 
-/* All strings are stdup'ed into here, so they can be free'd. */
 struct config
 {
-    pthread_mutex_t mod_lock;       /* modify lock */
     struct strlist sources;         /* src */
     struct strlist flags;           /* flags */
     char *buildfile;                /* -f */
@@ -84,15 +77,12 @@ struct config
     size_t ntargets;
 };
 
-/* Type of the config field. */
 enum field_type_e
 {
     FIELD_STR,
     FIELD_STRLIST
 };
 
-/* We can represent each modyfiable config field as a name and the type
-   of the value. */
 struct config_field
 {
     const char *name;
@@ -109,8 +99,6 @@ struct thread_task
     int to;
 };
 
-
-/* fs.c */
 
 /* Expands all wildcards in the `filenames` array and puts the expanded values
    back into the string list. */
@@ -131,14 +119,8 @@ int find(struct strlist *output, char type, char *dir, char *name);
 /* Recursively remove the directory at the given path. Same as rm -rf `path`. */
 void removedir(char *path);
 
-
-/* buildfile.c */
-
 /* Parse the buildfile. Name and data are pointed by `config`. */
 int parse_buildfile(struct config *config);
-
-
-/* config.c */
 
 void config_free(struct config *config);
 void config_dump(struct config *config);
@@ -154,9 +136,6 @@ size_t config_find_target(struct config *config, char *name);
    return 0. */
 int config_call_target(struct config *config, char *name);
 
-
-/* strlist.c */
-
 void strlist_free(struct strlist *list);
 void strlist_append(struct strlist *list, char *str);
 
@@ -167,9 +146,6 @@ bool strlist_contains(struct strlist *list, char *str);
    string is free'd, and the new one is copied. Returns 1 if index is out of
    bounds. */
 int strlist_replace(struct strlist *list, char *str, size_t index);
-
-
-/* strings.c */
 
 /* Returns true if `c` is a space or tab. */
 bool iswhitespace(char c);
@@ -191,12 +167,6 @@ int strsplit(struct strlist *list, char *str);
 /* Replaces `from` chars to `to` chars. Returns the amount of chars replaced. */
 int strreplace(char *str, char from, char to);
 
-
-/* compile.c */
-
 void compile(struct config *config);
-
-
-/* main.c */
 
 void usage();

@@ -7,4 +7,4 @@ Install:
     $ su -c target/bootstrap.sh
 
 Get help after installtion:
-    $ man 1 build
+    $ man build

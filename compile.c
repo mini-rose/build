@@ -1,7 +1,10 @@
-/* compile.c - compilation subroutines
-   Copyright (C) 2022 bellrise */
+/*
+ * compile.c - compilation subroutines
+ * Copyright (c) 2022 bellrise
+ */
 
 #include "build.h"
+
 
 /* Split config.soures.size tasks among `n` threads. The thread_tasks will be
    filled with index ranges into the source array, so that it can be passed
@@ -9,7 +12,7 @@
 void split_tasks(struct config *config, struct thread_task *tasks, int n);
 
 /* Run the given task. Launched as a pthread. */
-THREAD void *run_thread_task(struct thread_task *task);
+void *run_thread_task(struct thread_task *task);
 typedef void * (*thread_ft) (void *);
 
 /* Link all generated object files. */
@@ -115,7 +118,7 @@ void split_tasks(struct config *config, struct thread_task *tasks, int n)
     }
 }
 
-THREAD void *run_thread_task(struct thread_task *task)
+void *run_thread_task(struct thread_task *task)
 {
     char cmd[LINESIZE];
     char *changed_path;

@@ -1,5 +1,7 @@
-/* config.c - config struct operations
-   Copyright (C) 2022 bellrise */
+/*
+ * config.c - config struct operations
+ * Copyright (c) 2022 bellrise
+ */
 
 #include "build.h"
 

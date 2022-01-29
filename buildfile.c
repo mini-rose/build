@@ -1,5 +1,7 @@
-/* buildfile.c - buildfile parsing
-   Copyright (C) 2022 bellrise */
+/*
+ * buildfile.c - buildfile parsing
+ * Copyright (c) 2022 bellrise
+ */
 
 #include "build.h"
 

@@ -1,5 +1,7 @@
-/* strings.c - string operations
-   Copyright (C) 2022 bellrise */
+/*
+ * strings.c - string operations
+ * Copyright (c) 2022 bellrise
+ */
 
 #include "build.h"
 
