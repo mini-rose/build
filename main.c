@@ -24,6 +24,7 @@ int main(int argc, char **argv)
             continue;
         }
 
+        /* RSD 3/2a: provide --help */
         if (strcmp(argv[i], "--help") == 0)
             usage();
 
@@ -103,6 +104,7 @@ finish:
 
 void usage()
 {
+    /* RSD 3/3d: extended usage page format */
     printf(
         "usage: build [-cdfhsv] [target]\n"
         "Minimal build system\n\n"
