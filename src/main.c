@@ -81,7 +81,7 @@ int main(int argc, char **argv)
             }
         }
 
-		/* Don't compile if a target is passed */
+        /* Don't compile if a target is passed */
         goto finish;
     }
 

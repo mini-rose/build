@@ -128,7 +128,7 @@ int find(struct strlist *output, char type, char *dir, char *name)
             }
         }
 
-		/* Remove ./ from path */
+        /* Remove ./ from path */
         strlist_append(output, path + (*dir == '.' ? 2 : 0));
         added_amount++;
     }

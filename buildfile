@@ -3,6 +3,6 @@
 cc          clang
 out         target/build
 flags       -Wall -Wextra -O3
-src         *.c !test/test.c
+src         src/*.c !test/
 
 @install    sh ./target/install.sh
