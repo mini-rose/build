@@ -1,10 +1,8 @@
 build
-=====
+-----
 
-Minimal build system.
+Minimal build tool for POSIX systems, designed to be simple & straightforward.
+For more information read the manpage after installation (man build).
 
 Install:
     $ su -c target/bootstrap.sh
-
-Get help after installtion:
-    $ man build
