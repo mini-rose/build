@@ -1,6 +1,6 @@
 /*
  * build.h - main header
- * Copyright (c) 2022 bellrise
+ * Copyright (c) 2022 mini-rose
  */
 
 #define _XOPEN_SOURCE 500

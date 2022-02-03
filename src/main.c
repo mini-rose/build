@@ -1,6 +1,6 @@
 /*
  * main.c - entrypoint
- * Copyright (c) 2022 bellrise
+ * Copyright (c) 2022 mini-rose
  */
 
 #include "build.h"
@@ -107,7 +107,7 @@ void usage()
     /* RSD 3/3d: extended usage page format */
     printf(
         "usage: build [-cdfhsv] [target]\n"
-        "Minimal build system\n\n"
+        "Minimal build tool\n\n"
         "  -e           explain what is going on\n"
         "  -f <file>    path to a different buildfile\n"
         "  -h           show this page\n"

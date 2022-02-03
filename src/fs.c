@@ -1,6 +1,6 @@
 /*
  * fs.c - filesystem & filename operations
- * Copyright (c) 2022 bellrise
+ * Copyright (c) 2022 mini-rose
  */
 
 #include "build.h"
