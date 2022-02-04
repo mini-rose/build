@@ -9,7 +9,7 @@
 int main(int argc, char **argv)
 {
     struct config config = {0};
-    size_t exit_status = 0;
+    int exit_status = 0;
     config.buildfile = strdup(BUILD_FILE);
 
     argc--;
