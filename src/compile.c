@@ -30,7 +30,20 @@ void compile(struct config *config)
     if (stat(config->builddir, &st) == -1)
         mkdir(config->builddir, 0775);
 
-    if (config->use_single_thread) {
+    /* Amount of threads to use. If the thread count is 1, just use the main
+       thread to do all the work instead of creating a seperate one. */
+
+    if (config->use_n_threads)
+        nprocs = config->use_n_threads;
+    else
+        nprocs = get_nprocs();
+
+    if (nprocs <= 0 || nprocs > MAX_PROCS) {
+        fprintf(stderr, "build: thread amount out of range (%d)\n", nprocs);
+        exit(EXIT_THREAD);
+    }
+
+    if (nprocs == 1) {
         threads = NULL;
         thread_tasks = malloc(sizeof(*thread_tasks));
         thread_tasks[0] = (struct thread_task) {
@@ -44,9 +57,6 @@ void compile(struct config *config)
         goto link_stage;
     }
 
-    /* Compile on threads. */
-
-    nprocs = get_nprocs();
     thread_tasks = calloc(nprocs, sizeof(*thread_tasks));
     split_tasks(config, thread_tasks, nprocs);
 

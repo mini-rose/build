@@ -47,8 +47,13 @@ int main(int argc, char **argv)
             case 's':
                 config.only_setup = true;
                 break;
-            case 't':
-                config.use_single_thread = true;
+            case 'j':
+                if (i + 1 >= argc) {
+                    fprintf(stderr, "build: missing argument for -j\n");
+                    exit_status = EXIT_ARG;
+                    goto finish;
+                }
+                config.use_n_threads = atoi(argv[++i]);
                 break;
             case 'v':
                 printf("%d\n", BUILD_VERSION);
@@ -112,7 +117,7 @@ void usage()
         "  -f <file>    path to a different buildfile\n"
         "  -h           show this page\n"
         "  -s           only setup, do not start compiling\n"
-        "  -t           compile on a single thread\n"
+        "  -j <n>       compile on `n` threads (default: cpu count)\n"
         "  -v           show the version number\n"
     );
     exit(0);

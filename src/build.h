@@ -22,8 +22,11 @@
 # define get_nprocs()   8
 #endif
 
+/* The maximum amount of threads that can be launched. */
+#define MAX_PROCS       64
+
 /* Version integer. This is shown when -v is passed. */
-#define BUILD_VERSION   7
+#define BUILD_VERSION   8
 
 #define BUILD_FILE      "buildfile"
 #define BUILD_DIR       "builddir"
@@ -70,8 +73,8 @@ struct config
     char *out;                      /* out */
     bool explain;                   /* -e */
     bool only_setup;                /* -s */
-    bool use_single_thread;         /* -t */
     bool user_sources;
+    int use_n_threads;              /* -j */
     struct strlist called_targets;
     struct target **targets;
     size_t ntargets;

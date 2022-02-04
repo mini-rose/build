@@ -20,7 +20,7 @@ build \- Minimal build tool
 \fBbuild\fP is a minimal build tool, designed to be simple, while still being
 familiar and easy to learn.
 
-This manpage is for \fBbuild\fP version 7.
+This manpage is for \fBbuild\fP version 8.
 
 
 .SH OPTIONS
@@ -40,8 +40,9 @@ This manpage is for \fBbuild\fP version 7.
 \fB\-s\fP
   Do not compile, end after setup and buildfile parsing.
 
-\fB\-t\fP
-  Compile on a single thread.
+\fB\-j <n>\fP
+  Compile on `n` threads (default: cpu count). You may only use up to 64 threads,
+  because any more would just slow it down.
 
 \fB\-v\fP
   Show the version number. This is always a single integer number so you may

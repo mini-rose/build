@@ -4,7 +4,7 @@
 _build()
 {
     local cur prev opts
-    opts='-e -f -h -s -t -v --help'
+    opts='-e -f -h -s -j -v --help'
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
