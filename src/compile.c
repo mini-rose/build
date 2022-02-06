@@ -178,6 +178,11 @@ void link_object_files(struct config *config)
         strcat(cmd, objects.strs[i]);
     }
 
+    for (size_t i = 0; i < config->libraries.size; i++) {
+        strcat(cmd, " -l");
+        strcat(cmd, config->libraries.strs[i]);
+    }
+
     for (size_t i = 0; i < config->flags.size; i++) {
         strcat(cmd, " ");
         strcat(cmd, config->flags.strs[i]);

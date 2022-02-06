@@ -17,11 +17,12 @@ int parse_buildfile(struct config *config)
     size_t len, buflen;
 
     /* Set up config fields. */
-    const size_t nconfig_fields = 5;
+    const size_t nconfig_fields = 6;
     const struct config_field config_fields[] = {
         {"cc", FIELD_STR, &config->cc, BUILD_CC},
         {"src", FIELD_STRLIST, &config->sources, NULL},
         {"flags", FIELD_STRLIST, &config->flags, NULL},
+        {"libs", FIELD_STRLIST, &config->libraries, NULL},
         {"out", FIELD_STR, &config->out, BUILD_OUT},
         {"builddir", FIELD_STR, &config->builddir, BUILD_DIR},
     };

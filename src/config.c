@@ -36,6 +36,10 @@ void config_dump(struct config *config)
     for (size_t i = 0; i < config->flags.size; i++)
         printf("  %s\n", config->flags.strs[i]);
 
+    printf("libraries:\n");
+    for (size_t i = 0; i < config->libraries.size; i++)
+        printf("  %s\n", config->libraries.strs[i]);
+
     printf("called targets:\n");
     for (size_t i = 0; i < config->called_targets.size; i++)
         printf("  %s\n", config->called_targets.strs[i]);

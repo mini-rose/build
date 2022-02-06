@@ -20,7 +20,7 @@ build \- Minimal build tool
 \fBbuild\fP is a minimal build tool, designed to be simple, while still being
 familiar and easy to learn.
 
-This manpage is for \fBbuild\fP version 8.
+This manpage is for \fBbuild\fP version 9.
 
 
 .SH OPTIONS
@@ -87,6 +87,11 @@ a different option. This is the list of possible options a buildfile can have:
 
 \fBflags\fP
   Flags to pass to the compiler.
+
+\fBlibs\fP
+  Names of the libraries to compile against. The literal string is passed to the
+  -l argument during linking. It is recommened to place all libraries in here
+  instead of the flags option because these are only added in the linking stage.
 
 \fBout\fP
   Output file name. This will not create any directories, so you should create

@@ -26,7 +26,7 @@
 #define MAX_PROCS       64
 
 /* Version integer. This is shown when -v is passed. */
-#define BUILD_VERSION   8
+#define BUILD_VERSION   9
 
 #define BUILD_FILE      "buildfile"
 #define BUILD_DIR       "builddir"
@@ -67,6 +67,7 @@ struct config
 {
     struct strlist sources;         /* src */
     struct strlist flags;           /* flags */
+    struct strlist libraries;       /* libs */
     char *buildfile;                /* -f */
     char *builddir;                 /* builddir */
     char *cc;                       /* cc */
