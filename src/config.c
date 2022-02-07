@@ -9,6 +9,7 @@
 void config_free(struct config *config)
 {
     strlist_free(&config->called_targets);
+    strlist_free(&config->libraries);
     strlist_free(&config->sources);
     strlist_free(&config->flags);
     free(config->buildfile);
