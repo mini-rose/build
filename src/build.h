@@ -26,7 +26,7 @@
 #define MAX_PROCS       64
 
 /* Version integer. This is shown when -v is passed. */
-#define BUILD_VERSION   9
+#define BUILD_VERSION   10
 
 #define BUILD_FILE      "buildfile"
 #define BUILD_DIR       "builddir"

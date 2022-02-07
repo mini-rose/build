@@ -20,7 +20,7 @@ build \- Minimal build tool
 \fBbuild\fP is a minimal build tool, designed to be simple, while still being
 familiar and easy to learn.
 
-This manpage is for \fBbuild\fP version 9.
+This manpage is for \fBbuild\fP version 10.
 
 
 .SH OPTIONS
@@ -127,15 +127,15 @@ in your buildfile that work like "hooks", they automatically get executed at
 certain points of the build process and do not get blocked if the user defines
 a target.
 
-\fB@__default\fP
+\fB@default\fP
   If this target is defined, running "build" will _only_ call that target,
-  disabling the compilation & linking stages. Note that __setup & __finish
+  disabling the compilation & linking stages. Note that @before & @after
   will still be called.
 
-\fB@__setup\fP
+\fB@before\fP
   Ran before anything else happens.
 
-\fB@__finish\fP
+\fB@after\fP
   Ran after everything has finished.
 
 

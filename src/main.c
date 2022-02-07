@@ -72,8 +72,8 @@ int main(int argc, char **argv)
         goto finish;
     }
 
-    /* RSD 10/4d: run __setup before anything else */
-    config_call_target(&config, "__setup");
+    /* RSD 10/4d: run @before before anything else */
+    config_call_target(&config, "before");
 
     if (config.called_targets.size) {
         char *called;
@@ -90,18 +90,18 @@ int main(int argc, char **argv)
         goto finish;
     }
 
-    /* RSD 10/4c: If no targets have been specifically called, but the __default
+    /* RSD 10/4c: If no targets have been specifically called, but the default
        target is defined in the buildfile, call that. Also as defined in the
        manpage, we do not compile if this is the case. */
-    if (!config_call_target(&config, "__default"))
+    if (!config_call_target(&config, "default"))
         goto finish;
 
     if (!config.only_setup && config.sources.size)
         compile(&config);
 
 finish:
-    /* RSD 10/4e: run __finish after everything has happend */
-    config_call_target(&config, "__finish");
+    /* RSD 10/4e: run after after everything has happend */
+    config_call_target(&config, "after");
 
     config_free(&config);
     return exit_status;
