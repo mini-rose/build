@@ -5,6 +5,8 @@
 
 #include "build.h"
 
+#define STRLIST_BUMP_BY     32
+
 
 void strlist_free(struct strlist *list)
 {
@@ -18,7 +20,11 @@ void strlist_free(struct strlist *list)
 
 void strlist_append(struct strlist *list, char *str)
 {
-    list->strs = realloc(list->strs, sizeof(char *) * (list->size + 1));
+    if (list->size >= list->space) {
+        list->space += STRLIST_BUMP_BY;
+        list->strs = realloc(list->strs, sizeof(char *) * list->space);
+    }
+
     list->strs[list->size++] = strdup(str);
 }
 

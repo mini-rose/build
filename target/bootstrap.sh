@@ -8,5 +8,5 @@
 CC=$(type clang gcc c99 | grep -v 'not found' | head -n 1 | cut -f 1 -d " ")
 SOURCES=$(find . -type f -name '*.c' | grep -v test)
 
-$CC -o ./target/build $SOURCES -O3
+$CC -o ./target/build -lpthread $SOURCES -O3
 ./target/build install

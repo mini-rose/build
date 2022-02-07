@@ -49,6 +49,7 @@
 struct strlist
 {
     char **strs;
+    size_t space;
     size_t size;
 };
 
