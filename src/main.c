@@ -20,7 +20,7 @@ int main(int argc, char **argv)
     for (int i = 0; i < argc; i++) {
         /* This must be a target. */
         if (argv[i][0] != '-') {
-            strlist_append(&config.called_targets, argv[i]);
+            r_strlist_append(&config.called_targets, argv[i]);
             continue;
         }
 

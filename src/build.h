@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <libgen.h>
 #include <stdio.h>
+#include <rose.h>
 #include <ftw.h>
 
 #if __linux__ || __APPLE__
@@ -46,13 +47,6 @@
 #define EXIT_THREAD     5           /* failed to create thread */
 
 
-struct strlist
-{
-    char **strs;
-    size_t space;
-    size_t size;
-};
-
 struct target
 {
     char *name;
@@ -66,9 +60,9 @@ struct target
 
 struct config
 {
-    struct strlist sources;         /* src */
-    struct strlist flags;           /* flags */
-    struct strlist libraries;       /* libs */
+    struct r_strlist sources;       /* src */
+    struct r_strlist flags;         /* flags */
+    struct r_strlist libraries;     /* libs */
     char *buildfile;                /* -f */
     char *builddir;                 /* builddir */
     char *cc;                       /* cc */
@@ -77,7 +71,7 @@ struct config
     bool only_setup;                /* -s */
     bool user_sources;
     int use_n_threads;              /* -j */
-    struct strlist called_targets;
+    struct r_strlist called_targets;
     struct target **targets;
     size_t ntargets;
 };
@@ -107,7 +101,7 @@ struct thread_task
 
 /* Expands all wildcards in the `filenames` array and puts the expanded values
    back into the string list. */
-void expand_wildcards(struct strlist *filenames);
+void expand_wildcards(struct r_strlist *filenames);
 
 /* Resolve the buildfile path the user provided with -f. If the buildfile is in
    some other directory, we first need to chdir() there. */
@@ -115,11 +109,11 @@ void resolve_buildpath(struct config *config);
 
 /* If a filename begins with an "!", it and any matching filenames will be
    removed from the filename list. */
-void remove_excluded(struct strlist *filenames);
+void remove_excluded(struct r_strlist *filenames);
 
 /* Put the filenames into `output` from "find . -type `type` -name `name`."
    Returns the amount of files found. */
-int find(struct strlist *output, char type, char *dir, char *name);
+int find(struct r_strlist *output, char type, char *dir, char *name);
 
 /* Recursively remove the directory at the given path. Same as rm -rf `path`. */
 void removedir(char *path);
@@ -141,17 +135,6 @@ size_t config_find_target(struct config *config, char *name);
    return 0. */
 int config_call_target(struct config *config, char *name);
 
-void strlist_free(struct strlist *list);
-void strlist_append(struct strlist *list, char *str);
-
-/* Returns true if `str` can be found in the string list. */
-bool strlist_contains(struct strlist *list, char *str);
-
-/* Replaces the string at the given index with another string. The previous
-   string is free'd, and the new one is copied. Returns 1 if index is out of
-   bounds. */
-int strlist_replace(struct strlist *list, char *str, size_t index);
-
 /* Returns true if `c` is a space or tab. */
 bool iswhitespace(char c);
 
@@ -167,7 +150,7 @@ size_t linelen(char *line);
 char *strlstrip(char *str);
 
 /* Splits the string at whitespaces. Returns the amount of strings appended. */
-int strsplit(struct strlist *list, char *str);
+int strsplit(struct r_strlist *list, char *str);
 
 /* Replaces `from` chars to `to` chars. Returns the amount of chars replaced. */
 int strreplace(char *str, char from, char to);

@@ -1,0 +1,3 @@
+[submodule "librose"]
+	path = librose
+	url = git@github.com:mini-rose/librose

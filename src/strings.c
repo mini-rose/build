@@ -55,7 +55,7 @@ char *strlstrip(char *str)
     return copied;
 }
 
-int strsplit(struct strlist *list, char *str)
+int strsplit(struct r_strlist *list, char *str)
 {
     size_t len = strlen(str), offset, wlen;
     char tmpstr[SMALLBUFSIZ];
@@ -78,7 +78,7 @@ int strsplit(struct strlist *list, char *str)
         strncpy(tmpstr, str + i, wlen);
         tmpstr[wlen] = 0;
 
-        strlist_append(list, tmpstr);
+        r_strlist_append(list, tmpstr);
         added++;
 
         i += wlen - 1;

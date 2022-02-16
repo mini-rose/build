@@ -167,7 +167,7 @@ void *run_thread_task(struct thread_task *task)
 
 void link_object_files(struct config *config)
 {
-    struct strlist objects = {0};
+    struct r_strlist objects = {0};
     char cmd[LINESIZE];
 
     find(&objects, 'f', config->builddir, "*.o");
@@ -198,5 +198,5 @@ void link_object_files(struct config *config)
     printf("\033[2K\r[%zu/%zu] Done\n", config->sources.size,
         config->sources.size);
 
-    strlist_free(&objects);
+    r_strlist_free(&objects);
 }
