@@ -6,9 +6,9 @@
 #include "build.h"
 
 
-void expand_wildcards(struct r_strlist *filenames)
+void expand_wildcards(struct strlist *filenames)
 {
-    struct r_strlist expanded_filenames = {0};
+    struct strlist expanded_filenames = {0};
     char *dirp, *basep, *p_dirp, *p_basep;
     size_t nfilenames;
 
@@ -35,9 +35,9 @@ void expand_wildcards(struct r_strlist *filenames)
         free(filenames->strs[i]);
         filenames->strs[i] = strdup(expanded_filenames.strs[0]);
         for (size_t j = 1; j < expanded_filenames.size; j++)
-            r_strlist_append(filenames, expanded_filenames.strs[j]);
+            strlist_append(filenames, expanded_filenames.strs[j]);
 
-        r_strlist_free(&expanded_filenames);
+        strlist_free(&expanded_filenames);
     }
 }
 
@@ -56,10 +56,10 @@ void resolve_buildpath(struct config *config)
     free(path);
 }
 
-void remove_excluded(struct r_strlist *filenames)
+void remove_excluded(struct strlist *filenames)
 {
-    struct r_strlist new_list = {0};
-    struct r_strlist exclude_list = {0};
+    struct strlist new_list = {0};
+    struct strlist exclude_list = {0};
     size_t size;
 
     /* Collect the excluded filenames. */
@@ -68,7 +68,7 @@ void remove_excluded(struct r_strlist *filenames)
         if (filenames->strs[i][0] == '!') {
             if (filenames->strs[i][1] == 0)
                 continue;
-            r_strlist_append(&exclude_list, filenames->strs[i] + 1);
+            strlist_append(&exclude_list, filenames->strs[i] + 1);
 
             free(filenames->strs[i]);
             filenames->strs[i] = NULL;
@@ -91,22 +91,22 @@ void remove_excluded(struct r_strlist *filenames)
             }
         }
 
-        if (r_strlist_find(&exclude_list, filenames->strs[i]) != R_NOINDEX)
+        if (strlist_find(&exclude_list, filenames->strs[i]) != INVALID_INDEX)
             exclude_this_file = true;
 
         if (!exclude_this_file)
-            r_strlist_append(&new_list, filenames->strs[i]);
+            strlist_append(&new_list, filenames->strs[i]);
     }
 
     /* Move the new_list into the filenames list. */
 
-    r_strlist_free(&exclude_list);
-    r_strlist_free(filenames);
+    strlist_free(&exclude_list);
+    strlist_free(filenames);
     filenames->size = new_list.size;
     filenames->strs = new_list.strs;
 }
 
-int find(struct r_strlist *output, char type, char *dir, char *name)
+int find(struct strlist *output, char type, char *dir, char *name)
 {
     int added_amount = 0;
     char path[PATH_MAX];
@@ -129,7 +129,7 @@ int find(struct r_strlist *output, char type, char *dir, char *name)
         }
 
         /* Remove ./ from path */
-        r_strlist_append(output, path + (*dir == '.' ? 2 : 0));
+        strlist_append(output, path + (*dir == '.' ? 2 : 0));
         added_amount++;
     }
 

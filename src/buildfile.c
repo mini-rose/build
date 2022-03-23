@@ -116,5 +116,5 @@ static void set_config_defaults(struct config *config, size_t nfields,
 
     /* Use -pipe when possible to limit hard drive usage. */
     if (!strcmp(config->cc, "clang") || !strcmp(config->cc, "gcc"))
-        r_strlist_append(&config->flags, "-pipe");
+        strlist_append(&config->flags, "-pipe");
 }

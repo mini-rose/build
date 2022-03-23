@@ -20,12 +20,12 @@ int main(int argc, char **argv)
     for (int i = 0; i < argc; i++) {
         /* This must be a target. */
         if (argv[i][0] != '-') {
-            r_strlist_append(&config.called_targets, argv[i]);
+            strlist_append(&config.called_targets, argv[i]);
             continue;
         }
 
         /* RSD 3/2a: provide --help */
-        if (strcmp(argv[i], "--help") == 0)
+        if (!strcmp(argv[i], "--help"))
             usage();
 
         switch (argv[i][1]) {

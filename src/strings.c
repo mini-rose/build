@@ -30,6 +30,36 @@ size_t linelen(char *line)
     return len;
 }
 
+char *strlist_append(struct strlist *list, char *str)
+{
+    if (list->size >= list->space) {
+        list->space += STRLIST_GRAN;
+        list->strs = realloc(list->strs, sizeof(char *) * list->space);
+    }
+
+    list->strs[list->size] = strdup(str);
+    return list->strs[list->size++];
+}
+
+void strlist_free(struct strlist *list)
+{
+    for (size_t i = 0; i < list->size; i++)
+        free(list->strs[i]);
+    free(list->strs);
+
+    memset(list, 0, sizeof(*list));
+}
+
+size_t strlist_find(struct strlist *list, char *str)
+{
+    for (size_t i = 0; i < list->size; i++) {
+        if (!strcmp(str, list->strs[i]))
+            return i;
+    }
+
+    return INVALID_INDEX;
+}
+
 char *strlstrip(char *str)
 {
     /* Strip the string and return a new malloc'ed string. */
@@ -55,7 +85,7 @@ char *strlstrip(char *str)
     return copied;
 }
 
-int strsplit(struct r_strlist *list, char *str)
+int strsplit(struct strlist *list, char *str)
 {
     size_t len = strlen(str), offset, wlen;
     char tmpstr[SMALLBUFSIZ];
@@ -78,7 +108,7 @@ int strsplit(struct r_strlist *list, char *str)
         strncpy(tmpstr, str + i, wlen);
         tmpstr[wlen] = 0;
 
-        r_strlist_append(list, tmpstr);
+        strlist_append(list, tmpstr);
         added++;
 
         i += wlen - 1;

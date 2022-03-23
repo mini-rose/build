@@ -13,7 +13,6 @@
 #include <stdlib.h>
 #include <libgen.h>
 #include <stdio.h>
-#include <rose.h>
 #include <ftw.h>
 
 #if __linux__ || __APPLE__
@@ -40,6 +39,9 @@
 #define SMALLBUFSIZ     128
 #define INVALID_INDEX   ((size_t) -1)
 
+/* String list allocation granuality. */
+#define STRLIST_GRAN    16
+
 #define EXIT_ARG        1           /* missing command line argument */
 #define EXIT_BUILDFILE  2           /* buildfile not found */
 #define EXIT_POPEN      3           /* popen failed */
@@ -58,11 +60,18 @@ struct target
     char _data[];
 };
 
+struct strlist
+{
+    char **strs;
+    size_t size;
+    size_t space;
+};
+
 struct config
 {
-    struct r_strlist sources;       /* src */
-    struct r_strlist flags;         /* flags */
-    struct r_strlist libraries;     /* libs */
+    struct strlist sources;       /* src */
+    struct strlist flags;         /* flags */
+    struct strlist libraries;     /* libs */
     char *buildfile;                /* -f */
     char *builddir;                 /* builddir */
     char *cc;                       /* cc */
@@ -71,7 +80,7 @@ struct config
     bool only_setup;                /* -s */
     bool user_sources;
     int use_n_threads;              /* -j */
-    struct r_strlist called_targets;
+    struct strlist called_targets;
     struct target **targets;
     size_t ntargets;
 };
@@ -101,7 +110,7 @@ struct thread_task
 
 /* Expands all wildcards in the `filenames` array and puts the expanded values
    back into the string list. */
-void expand_wildcards(struct r_strlist *filenames);
+void expand_wildcards(struct strlist *filenames);
 
 /* Resolve the buildfile path the user provided with -f. If the buildfile is in
    some other directory, we first need to chdir() there. */
@@ -109,11 +118,11 @@ void resolve_buildpath(struct config *config);
 
 /* If a filename begins with an "!", it and any matching filenames will be
    removed from the filename list. */
-void remove_excluded(struct r_strlist *filenames);
+void remove_excluded(struct strlist *filenames);
 
 /* Put the filenames into `output` from "find . -type `type` -name `name`."
    Returns the amount of files found. */
-int find(struct r_strlist *output, char type, char *dir, char *name);
+int find(struct strlist *output, char type, char *dir, char *name);
 
 /* Recursively remove the directory at the given path. Same as rm -rf `path`. */
 void removedir(char *path);
@@ -146,11 +155,24 @@ size_t wordlen(char *word);
    closes newline. Stops at a null byte. */
 size_t linelen(char *line);
 
+/* Copies `str` into an empty slot in the string list. Returns the pointer to
+   the string. If the operation fails, NULL is returned. */
+char *strlist_append(struct strlist *list, char *str);
+
+/* Free all memory allocated in `list`. Sets all values of `list` to 0, making
+   it reusable. */
+void strlist_free(struct strlist *list);
+
+/* Return the index of `str` in `list`. If the string is not found,
+   INVALID_INDEX is returned. Note that this uses a simple strcmp(), so it may
+   not very efficient in finding a string. */
+size_t strlist_find(struct strlist *list, char *str);
+
 /* Return a copy of the lstripped string. */
 char *strlstrip(char *str);
 
 /* Splits the string at whitespaces. Returns the amount of strings appended. */
-int strsplit(struct r_strlist *list, char *str);
+int strsplit(struct strlist *list, char *str);
 
 /* Replaces `from` chars to `to` chars. Returns the amount of chars replaced. */
 int strreplace(char *str, char from, char to);
