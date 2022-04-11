@@ -29,22 +29,23 @@ void config_dump(struct config *config)
     printf("cc:        %s\nbuildfile: %s\nbuilddir:  %s\nout:       %s\n",
         config->cc, config->buildfile, config->builddir, config->out);
 
-    printf("sources:\n");
+    puts("sources:");
     for (size_t i = 0; i < config->sources.size; i++)
         printf("  %s\n", config->sources.strs[i]);
 
-    printf("flags:\n");
+    puts("flags:");
     for (size_t i = 0; i < config->flags.size; i++)
         printf("  %s\n", config->flags.strs[i]);
 
-    printf("libraries:\n");
+    printf("libraries:");
     for (size_t i = 0; i < config->libraries.size; i++)
         printf("  %s\n", config->libraries.strs[i]);
 
-    printf("called targets:\n");
+    puts("called targets:");
     for (size_t i = 0; i < config->called_targets.size; i++)
         printf("  %s\n", config->called_targets.strs[i]);
-    printf("targets:\n");
+
+    puts("targets:");
     for (size_t i = 0; i < config->ntargets; i++) {
         printf("  %s : %s\n", config->targets[i]->name,
                 config->targets[i]->cmd);

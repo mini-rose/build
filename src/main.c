@@ -34,7 +34,7 @@ int main(int argc, char **argv)
                 break;
             case 'f':
                 if (i + 1 >= argc) {
-                    fprintf(stderr, "build: missing argument for -f\n");
+                    fputs("build: missing argument for -f\n", stderr);
                     exit_status = EXIT_ARG;
                     goto finish;
                 }
@@ -49,7 +49,7 @@ int main(int argc, char **argv)
                 break;
             case 'j':
                 if (i + 1 >= argc) {
-                    fprintf(stderr, "build: missing argument for -j\n");
+                    fputs("build: missing argument for -j\n", stderr);
                     exit_status = EXIT_ARG;
                     goto finish;
                 }
@@ -110,7 +110,7 @@ finish:
 void usage()
 {
     /* RSD 3/3d: extended usage page format */
-    printf(
+    puts(
         "usage: build [-cdfhsv] [target]\n"
         "Minimal build tool\n\n"
         "  -e           explain what is going on\n"
@@ -118,7 +118,7 @@ void usage()
         "  -h           show this page\n"
         "  -s           only setup, do not start compiling\n"
         "  -j <n>       compile on `n` threads (default: cpu count)\n"
-        "  -v           show the version number\n"
+        "  -v           show the version number"
     );
     exit(0);
 }

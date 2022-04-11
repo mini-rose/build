@@ -95,7 +95,7 @@ int parse_buildfile(struct config *config)
     fclose(buildfile);
 
     if (config->explain) {
-        printf("Parsing the buildfile returned:\n");
+        puts("Parsing the buildfile returned:");
         config_dump(config);
     }
 

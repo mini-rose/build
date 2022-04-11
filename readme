@@ -6,3 +6,5 @@ For more information read the manpage after installation (man build).
 
 Install:
     $ su -c target/bootstrap.sh
+
+This project has no dependencies.
