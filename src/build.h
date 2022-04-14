@@ -69,9 +69,9 @@ struct strlist
 
 struct config
 {
-    struct strlist sources;       /* src */
-    struct strlist flags;         /* flags */
-    struct strlist libraries;     /* libs */
+    struct strlist sources;         /* src */
+    struct strlist flags;           /* flags */
+    struct strlist libraries;       /* libs */
     char *buildfile;                /* -f */
     char *builddir;                 /* builddir */
     char *cc;                       /* cc */

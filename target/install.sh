@@ -16,7 +16,6 @@
     mkdir -p /usr/share/man/man1
     cp -f ./target/build /usr/bin/build
     cp -f ./build.1 /usr/share/man/man1/build.1
-    cp -f ./target/bashauto.sh /etc/bash_completion.d/build
     echo 'Installation complete. See `man build` for more information.'
 } || {
     echo 'run a regular `build` first'
