@@ -16,6 +16,15 @@
     mkdir -p /usr/share/man/man1
     cp -f ./target/build /usr/bin/build
     cp -f ./build.1 /usr/share/man/man1/build.1
+
+	# Install autocomplete scripts too.
+	case "$(basename $SHELL)" in
+		zsh)
+			cp -f ./target/zshcomplete.zsh /usr/share/zsh/functions/Completion/Unix/_build;;
+		bash|dash)
+			cp -f ./target/bashcomplete.sh /etc/bash_completion.d/build;;
+	esac
+
     echo 'Installation complete. See `man build` for more information.'
 } || {
     echo 'run a regular `build` first'
