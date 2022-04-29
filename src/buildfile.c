@@ -4,6 +4,7 @@
  */
 
 #include "build.h"
+#include <string.h>
 
 
 static void set_config_defaults(struct config *config, size_t nfields,
@@ -12,7 +13,8 @@ static void set_config_defaults(struct config *config, size_t nfields,
 
 int parse_buildfile(struct config *config)
 {
-	char *buf, *val;
+	char *buf, *val, *collected_cmd, *target;
+	bool next_maybe_command = false;
 	FILE *buildfile;
 	size_t len, buflen;
 
@@ -32,8 +34,24 @@ int parse_buildfile(struct config *config)
 		return 1;
 
 	buf = calloc(LINESIZE, 1);
+	target = malloc(SMALLBUFSIZ);
 
 	while (fgets(buf, LINESIZE, buildfile)) {
+		/* If the previous line is a target and this line has whitespace at the
+		   beginning, it's a command. */
+		if (iswhitespace(*buf) && next_maybe_command) {
+			if (*buf == '\n')
+				continue;
+			collected_cmd = strlstrip(buf);
+			if (collected_cmd[strlen(collected_cmd) - 1] == '\n')
+				collected_cmd[strlen(collected_cmd) - 1] = 0;
+			config_add_target_command(config, target, collected_cmd);
+			free(collected_cmd);
+			continue;
+		}
+
+		next_maybe_command = false;
+
 		/* Skip empty & commented lines. */
 		if (iswhitespace(*buf) || *buf == '\n' || *buf == '#')
 			continue;
@@ -43,7 +61,6 @@ int parse_buildfile(struct config *config)
 		/* If the newline is escaped, get another line. */
 		while (buf[buflen-1] == '\\') {
 			fgets(buf + buflen, LINESIZE - buflen, buildfile);
-			// buf[buflen] = ' ';
 			buf[buflen-1] = ' ';
 			buflen = linelen(buf);
 		}
@@ -56,8 +73,15 @@ int parse_buildfile(struct config *config)
 		buf[len] = 0;
 		val = strlstrip(buf + len + 1);
 
+		/* RSD 10/1e: Parse multi-line targets. */
 		if (*buf == '@') {
-			config_add_target(config, buf + 1, val);
+			strncpy(target, buf + 1, SMALLBUFSIZ);
+			config_add_target(config, target);
+
+			if (*val && !iswhitespace(*val))
+				config_add_target_command(config, target, val);
+
+			next_maybe_command = true;
 			free(val);
 			continue;
 		}
@@ -91,6 +115,7 @@ int parse_buildfile(struct config *config)
 	remove_excluded(&config->sources);
 	set_config_defaults(config, nconfig_fields, config_fields);
 
+	free(target);
 	free(buf);
 	fclose(buildfile);
 

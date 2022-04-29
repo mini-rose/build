@@ -26,7 +26,7 @@
 #define MAX_PROCS       64
 
 /* Version integer. This is shown when -v is passed. */
-#define BUILD_VERSION   10
+#define BUILD_VERSION   11
 
 #define BUILD_FILE      "buildfile"
 #define BUILD_DIR       "builddir"
@@ -49,22 +49,17 @@
 #define EXIT_THREAD     5           /* failed to create thread */
 
 
-struct target
-{
-	char *name;
-	char *cmd;
-
-	/* Both strings are actually allocated here, so instead of 3 there is
-	   only a single allocation. The `name` and `cmd` pointer point into this
-	   array, which contains null-terminated string. */
-	char _data[];
-};
-
 struct strlist
 {
 	char **strs;
 	size_t size;
 	size_t space;
+};
+
+struct target
+{
+	struct strlist cmds;
+	char name[];
 };
 
 struct config
@@ -133,8 +128,14 @@ int parse_buildfile(struct config *config);
 void config_free(struct config *config);
 void config_dump(struct config *config);
 
-/* Add a target to the config. Both strings are copied into a new slot. */
-void config_add_target(struct config *config, char *name, char *cmd);
+/* Add a target to the config. Both strings are copied into a new slot.
+   Returns the point to the added target, otherwise NULL. */
+struct target *config_add_target(struct config *config, char *name);
+
+/* Adds a command to the given target. If the target is not found, 1 is
+   returned. Otherwise the command is added into the string list of commands
+   and 0 is returned. */
+int config_add_target_command(struct config *config, char *target, char *cmd);
 
 /* Find the target of the selected `name`, and returns the index of the target
    if it's found. Otherwise, returns INVALID_INDEX. */
