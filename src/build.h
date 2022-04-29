@@ -51,60 +51,60 @@
 
 struct target
 {
-    char *name;
-    char *cmd;
+	char *name;
+	char *cmd;
 
-    /* Both strings are actually allocated here, so instead of 3 there is
-       only a single allocation. The `name` and `cmd` pointer point into this
-       array, which contains null-terminated string. */
-    char _data[];
+	/* Both strings are actually allocated here, so instead of 3 there is
+	   only a single allocation. The `name` and `cmd` pointer point into this
+	   array, which contains null-terminated string. */
+	char _data[];
 };
 
 struct strlist
 {
-    char **strs;
-    size_t size;
-    size_t space;
+	char **strs;
+	size_t size;
+	size_t space;
 };
 
 struct config
 {
-    struct strlist sources;         /* src */
-    struct strlist flags;           /* flags */
-    struct strlist libraries;       /* libs */
-    char *buildfile;                /* -f */
-    char *builddir;                 /* builddir */
-    char *cc;                       /* cc */
-    char *out;                      /* out */
-    bool explain;                   /* -e */
-    bool only_setup;                /* -s */
-    bool user_sources;
-    int use_n_threads;              /* -j */
-    struct strlist called_targets;
-    struct target **targets;
-    size_t ntargets;
+	struct strlist sources;         /* src */
+	struct strlist flags;           /* flags */
+	struct strlist libraries;       /* libs */
+	char *buildfile;                /* -f */
+	char *builddir;                 /* builddir */
+	char *cc;                       /* cc */
+	char *out;                      /* out */
+	bool explain;                   /* -e */
+	bool only_setup;                /* -s */
+	bool user_sources;
+	int use_n_threads;              /* -j */
+	struct strlist called_targets;
+	struct target **targets;
+	size_t ntargets;
 };
 
 enum field_type_e
 {
-    FIELD_STR,
-    FIELD_STRLIST
+	FIELD_STR,
+	FIELD_STRLIST
 };
 
 struct config_field
 {
-    const char *name;
-    enum field_type_e type;
-    void *val;
-    const char *default_val;
+	const char *name;
+	enum field_type_e type;
+	void *val;
+	const char *default_val;
 };
 
 struct thread_task
 {
-    struct config *config;
-    int tid;
-    int from;
-    int to;
+	struct config *config;
+	int tid;
+	int from;
+	int to;
 };
 
 
