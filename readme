@@ -1,10 +1,28 @@
 build
------
+=====
 
-Minimal build tool for POSIX systems, designed to be simple & straightforward.
-For more information read the manpage after installation (man build).
+Minimal build tool for POSIX systems, designed to be simple & straightforward,
+while still being familiar and easy to learn. The file format is based on two
+simple sections: the options & targets. To whet your appetite, here is an
+example:
 
-Install:
-    $ su -c target/bootstrap.sh
+	cc          gcc
+	src         src/*.c
+	flags       -I./include
+	out         program
 
-This project has no dependencies.
+	@install    mv -f program /usr/local/bin
+
+As you can see, this buildfile is used to compile a project with C sources in
+src/ and header files in include/. The `out` option is the name of the output
+file, which then can be installed using `build install`. For more information
+you can install build and read the manpage with `man 1 build`.
+
+
+Install
+-------
+
+This project has no dependencies, the only thing you need is the standard C
+library along with POSIX headers and a sane compiler.
+
+	$ su -c target/bootstrap.sh
