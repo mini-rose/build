@@ -33,7 +33,7 @@
 #define BUILD_OUT       "program"
 #define BUILD_CC        "c99"
 
-/* RSD 10/2a: provide atleast a 4095 char line buffer */
+/* RSD 10/2a: provide at least a 4095 char line buffer */
 #define LINESIZE        4096
 
 #define SMALLBUFSIZ     128

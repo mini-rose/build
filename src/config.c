@@ -127,7 +127,7 @@ int config_call_target(struct config *config, char *name)
 	if (config->explain)
 		printf("issuing '%s\'", command);
 
-	/* RSD 10/4a: use atleast system() for the shell command */
+	/* RSD 10/4a: use at least system() for the shell command */
 	system(command);
 	free(command);
 	return 0;
